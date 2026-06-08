@@ -3,269 +3,284 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>학교 신문 - 온라인 에디션</title>
-    <!-- 신문 감성을 위한 명조체 웹 폰트 로드 -->
-    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&display=swap" rel="stylesheet">
+    <title>학교 신문 - 디지털 아카이브</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
         /* 기본 리셋 및 폰트 설정 */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Nanum Myeongjo', serif;
-            background-color: #fdfdfc; /* 살짝 오래된 종이 느낌의 아주 밝은 아이보리 */
+            background-color: #fcfbfa;
             color: #1a1a1a;
-            line-height: 1.6;
+            line-height: 1.7;
         }
+        .sans-font { font-family: 'Noto Sans KR', sans-serif; }
+        .wrap { max-width: 1300px; margin: 0 auto; padding: 40px 20px; }
 
-        .wrap {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        /* 신문 헤더 스타일링 */
+        /* 헤더 스타일 */
         .newspaper-header {
             text-align: center;
-            border-bottom: 4px solid #1a1a1a;
+            border-bottom: 5px double #1a1a1a;
             margin-bottom: 30px;
-            padding-bottom: 10px;
+            padding-bottom: 15px;
         }
-
         .header-info {
-            display: flex;
-            justify-content: space-between;
-            border-top: 1px solid #1a1a1a;
-            border-bottom: 1px solid #1a1a1a;
-            padding: 5px 0;
-            font-size: 0.9rem;
-            font-weight: 700;
+            display: flex; justify-content: space-between;
+            border-top: 1px solid #1a1a1a; border-bottom: 1px solid #1a1a1a;
+            padding: 8px 15px; font-size: 0.95rem; font-weight: 700;
+            font-family: 'Noto Sans KR', sans-serif;
         }
-
         .newspaper-title {
-            font-size: 5rem;
-            font-weight: 800;
-            letter-spacing: 10px;
-            margin: 20px 0;
+            font-size: 5rem; font-weight: 800; letter-spacing: 12px;
+            margin: 15px 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
         }
 
-        .header-motto {
-            border-top: 2px solid #1a1a1a;
-            padding-top: 5px;
-            font-style: italic;
-            color: #4a4a4a;
+        /* 카테고리 탭 */
+        .category-container {
+            display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;
+            margin-bottom: 30px; font-family: 'Noto Sans KR', sans-serif;
+        }
+        .category-tab {
+            padding: 8px 20px; border: 1px solid #1a1a1a;
+            background-color: transparent; font-size: 0.95rem; font-weight: 700;
+            cursor: pointer; transition: all 0.3s ease; border-radius: 20px;
+        }
+        .category-tab:hover, .category-tab.active {
+            background-color: #1a1a1a; color: #fcfbfa;
         }
 
-        /* 레이아웃 구성 */
-        .container {
-            display: flex;
-            gap: 30px;
-            align-items: flex-start;
-        }
-
-        .viewer-section {
-            flex: 3;
-        }
-
+        /* 레이아웃 구조 */
+        .container { display: flex; gap: 30px; align-items: flex-start; }
+        .viewer-section { flex: 2.5; }
         .archive-section {
-            flex: 1;
-            border-left: 1px solid #ccc;
-            padding-left: 30px;
+            flex: 1; background-color: #f5f3ee; padding: 20px;
+            border-radius: 6px; border: 1px solid #e1ded7;
+            max-height: 85vh; overflow-y: auto;
         }
+        .archive-section::-webkit-scrollbar { width: 6px; }
+        .archive-section::-webkit-scrollbar-thumb { background: #c5c2ba; border-radius: 3px; }
 
+        /* 메인 뷰어 */
         .section-title {
-            font-size: 1.5rem;
-            border-bottom: 2px solid #1a1a1a;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
+            font-size: 1.5rem; font-weight: 800; border-bottom: 2px solid #1a1a1a;
+            padding-bottom: 10px; margin-bottom: 20px;
         }
-
-        /* PDF 뷰어 컨테이너 (16:9 또는 A4 비율 유지) */
-        .pdf-container {
-            width: 100%;
-            height: 80vh; /* 화면 높이의 80% 사용 */
-            border: 1px solid #ccc;
-            box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
-            background-color: #fff;
+        .pdf-frame {
+            border: 8px solid #e6e4e0; border-radius: 4px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08); background-color: #fff;
         }
+        .pdf-container { width: 100%; height: 80vh; }
+        #pdf-viewer { width: 100%; height: 100%; border: none; }
 
-        #pdf-viewer {
-            width: 100%;
-            height: 100%;
-            border: none;
+        /* 아카이브 리스트(호수별 메인 화면 카드) */
+        .grid-archive { display: flex; flex-direction: column; gap: 15px; }
+        .newspaper-card {
+            background: #ffffff; border: 1px solid #dcd9d0; padding: 15px;
+            border-radius: 4px; cursor: pointer; position: relative;
+            transition: all 0.2s;
         }
-
-        /* 아카이브 리스트 */
-        .issue-list {
-            list-style: none;
+        .newspaper-card::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%;
+            background: #1a1a1a; opacity: 0; transition: opacity 0.2s;
         }
+        .newspaper-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .newspaper-card.active { border-color: #1a1a1a; background-color: #fffdf9; }
+        .newspaper-card.active::before { opacity: 1; }
+        
+        .card-vol { font-family: 'Noto Sans KR', sans-serif; font-size: 0.8rem; font-weight: 700; color: #555; }
+        .card-title { font-size: 1.1rem; font-weight: 700; margin: 5px 0; }
+        .card-date { font-family: 'Noto Sans KR', sans-serif; font-size: 0.8rem; color: #888; }
 
-        .issue-list li {
-            padding: 10px 0;
-            border-bottom: 1px dashed #ccc;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
+        /* 로딩 화면 */
+        #loading-msg { text-align: center; padding: 50px; font-weight: bold; color: #666; }
 
-        .issue-list li:hover {
-            background-color: #f0f0f0;
-            font-weight: bold;
-        }
-
-        .issue-list li.active {
-            font-weight: bold;
-            color: #b30000; /* 강조 색상 */
-        }
-
-        footer {
-            text-align: center;
-            margin-top: 50px;
-            padding: 20px 0;
-            border-top: 1px solid #ccc;
-            font-size: 0.8rem;
-            color: #666;
-        }
-
-        /* 모바일 반응형 처리 */
-        @media (max-width: 768px) {
-            .container {
-                flex-direction: column;
-            }
-            .archive-section {
-                border-left: none;
-                padding-left: 0;
-                border-top: 2px solid #1a1a1a;
-                padding-top: 20px;
-                width: 100%;
-            }
-            .newspaper-title {
-                font-size: 3rem;
-                letter-spacing: 5px;
-            }
-            .pdf-container {
-                height: 60vh;
-            }
+        @media (max-width: 992px) {
+            .container { flex-direction: column; }
+            .viewer-section, .archive-section { width: 100%; flex: none; }
+            .archive-section { max-height: none; }
+            .newspaper-title { font-size: 3rem; letter-spacing: 6px; }
         }
     </style>
 </head>
 <body>
     <div class="wrap">
-        <!-- 신문 헤더 영역 -->
         <header class="newspaper-header">
             <div class="header-info">
-                <span id="issue-vol">Vol. 12</span>
-                <span>정기발행</span>
-                <span id="issue-date">2026년 6월 8일 월요일</span>
+                <span id="header-vol">Vol. --</span>
+                <span>ONLINE ARCHIVE</span>
+                <span id="header-date">--</span>
             </div>
             <h1 class="newspaper-title">학교 신문</h1>
-            <div class="header-motto">
-                <p>세상을 보는 맑은 창, 학생들의 목소리를 담습니다</p>
-            </div>
         </header>
 
-        <!-- 메인 콘텐츠 영역 -->
+        <nav class="category-container" id="category-bar">
+            </nav>
+
         <main class="container">
             <section class="viewer-section">
-                <h2 class="section-title">📰 <span id="current-issue-title">제12호 (2026년 6월)</span></h2>
-                
-                <!-- PDF 뷰어 (iframe 활용) -->
-                <div class="pdf-container">
-                    <iframe id="pdf-viewer" src="latest.pdf" title="신문 뷰어">
-                        <p>현재 브라우저에서 PDF를 직접 볼 수 없습니다. <a id="fallback-link" href="latest.pdf">여기에서 PDF를 다운로드</a> 하세요.</p>
-                    </iframe>
+                <h2 class="section-title">
+                    <span id="current-issue-title">신문을 불러오는 중입니다...</span>
+                </h2>
+                <div class="pdf-frame">
+                    <div class="pdf-container" id="viewer-container">
+                        <div id="loading-msg">GitHub에서 파일 목록을 가져오고 있습니다...</div>
+                        <iframe id="pdf-viewer" src="" style="display:none;" title="신문 뷰어"></iframe>
+                    </div>
                 </div>
             </section>
 
-            <!-- 지난 호 아카이브 (사이드바) -->
             <aside class="archive-section">
-                <h2 class="section-title">📂 지난 호 보기</h2>
-                <ul id="issue-list" class="issue-list">
-                    <!-- JavaScript를 통해 동적으로 리스트가 생성됩니다. -->
-                </ul>
+                <h2 class="section-title sans-font" style="font-size: 1.2rem;">📂 호수별 목록보기</h2>
+                <div id="grid-archive" class="grid-archive">
+                    </div>
             </aside>
         </main>
-
-        <footer>
-            <p>&copy; 2026 OO고등학교 신문부 & 컴퓨터부. All Rights Reserved.</p>
-        </footer>
     </div>
 
     <script>
-        // 신문부가 관리해야 할 유일한 데이터 공간입니다.
-        // 새로운 호가 나오면 GitHub 폴더에 PDF를 넣고 여기에 정보만 추가하면 됩니다.
-        const issues = [
-            {
-                id: 12,
-                title: "제12호 (2026년 6월)",
-                date: "2026년 6월 8일 월요일",
-                file: "issue_12.pdf" // 실제 GitHub 저장소에 올라갈 파일명
-            },
-            {
-                id: 11,
-                title: "제11호 (2026년 5월)",
-                date: "2026년 5월 10일 월요일",
-                file: "issue_11.pdf"
-            },
-            {
-                id: 10,
-                title: "제10호 (2026년 4월 - 중간고사 특집)",
-                date: "2026년 4월 5일 금요일",
-                file: "issue_10.pdf"
-            }
-        ];
+        /* ==========================================
+           설정 영역 (이 부분만 본인 환경에 맞게 수정하세요)
+           ========================================== */
+        const GITHUB_USERNAME = '사용자이름적기';  // 예: 'student123'
+        const GITHUB_REPO = '저장소이름적기';     // 예: 'school-news'
+        const FOLDER_PATH = 'pdfs';           // GitHub 내에 PDF를 올릴 폴더 이름
+        
+        // GitHub API 주소 완성
+        const API_URL = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${FOLDER_PATH}`;
+
+        let allIssues = [];
+        let currentCategory = 'all';
 
         // DOM 요소 캐싱
-        const issueListEl = document.getElementById('issue-list');
+        const gridArchive = document.getElementById('grid-archive');
         const pdfViewer = document.getElementById('pdf-viewer');
-        const fallbackLink = document.getElementById('fallback-link');
-        const currentTitle = document.getElementById('current-issue-title');
-        const issueVol = document.getElementById('issue-vol');
-        const issueDate = document.getElementById('issue-date');
+        const loadingMsg = document.getElementById('loading-msg');
+        const categoryBar = document.getElementById('category-bar');
 
-        // 초기화 함수
-        function init() {
-            renderArchiveList();
-            // 가장 최근 호(배열의 첫 번째 요소)를 로드
-            if (issues.length > 0) {
-                loadIssue(issues[0]);
+        // 1. GitHub API로 파일 목록 자동 읽어오기
+        async function fetchNewspapers() {
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) throw new Error('파일을 찾을 수 없습니다. 설정과 폴더를 확인하세요.');
+                
+                const files = await response.json();
+                
+                // PDF 파일만 골라서 파일명 분석 (12_2026-06-08_여름호.pdf)
+                allIssues = files
+                    .filter(file => file.name.toLowerCase().endsWith('.pdf'))
+                    .map(file => {
+                        const cleanName = file.name.replace('.pdf', '');
+                        const parts = cleanName.split('_'); // '_' 기준으로 분리
+                        
+                        // 이름 규칙에 안 맞게 올린 파일 예외 처리
+                        if (parts.length < 3) return null; 
+
+                        const id = parseInt(parts[0]);         // 12
+                        const dateStr = parts[1];              // 2026-06-08
+                        const year = dateStr.split('-')[0];    // 2026
+                        const title = parts.slice(2).join('_'); // 여름호
+                        
+                        return {
+                            id: id,
+                            year: year,
+                            title: title,
+                            date: dateStr.replace(/-/g, '. '), // 2026. 06. 08 형태로 변환
+                            fileUrl: file.download_url // GitHub에서 바로 볼 수 있는 주소
+                        };
+                    })
+                    .filter(issue => issue !== null) // 규칙에 안 맞는 파일 제외
+                    .sort((a, b) => b.id - a.id);    // 최신호(숫자가 큰 순)로 정렬
+
+                if (allIssues.length === 0) {
+                    loadingMsg.textContent = "업로드된 신문이 없습니다. 규칙에 맞게 파일을 올려주세요.";
+                    return;
+                }
+
+                // 데이터 로드 완료, UI 생성 시작
+                loadingMsg.style.display = 'none';
+                pdfViewer.style.display = 'block';
+                
+                generateCategories();
+                renderCards(allIssues);
+                loadIssue(allIssues[0]); // 가장 최신호 자동 로드
+
+            } catch (error) {
+                loadingMsg.textContent = `에러 발생: ${error.message}`;
             }
         }
 
-        // 사이드바 리스트 렌더링
-        function renderArchiveList() {
-            issueListEl.innerHTML = '';
+        // 2. 파일들에서 연도(Year)를 추출해 자동으로 카테고리 탭 생성
+        function generateCategories() {
+            const years = [...new Set(allIssues.map(issue => issue.year))]; // 중복 연도 제거
             
-            issues.forEach((issue) => {
-                const li = document.createElement('li');
-                li.textContent = issue.title;
-                
-                // 클릭 시 해당 호수로 뷰어 업데이트
-                li.addEventListener('click', () => {
-                    loadIssue(issue);
-                    
-                    // 활성화 스타일 적용
-                    document.querySelectorAll('.issue-list li').forEach(el => el.classList.remove('active'));
-                    li.classList.add('active');
-                });
-                
-                issueListEl.appendChild(li);
+            // 전체보기 버튼
+            categoryBar.innerHTML = `<button class="category-tab active" onclick="filterCategory('all')">전체보기</button>`;
+            
+            // 연도별 버튼 자동 생성
+            years.sort((a, b) => b - a).forEach(year => {
+                const btn = document.createElement('button');
+                btn.className = 'category-tab';
+                btn.textContent = `${year}년`;
+                btn.onclick = () => filterCategory(year);
+                categoryBar.appendChild(btn);
             });
+        }
 
-            // 첫 번째 항목에 초기 active 클래스 부여
-            if (issueListEl.firstChild) {
-                issueListEl.firstChild.classList.add('active');
+        // 3. 호수별 카드를 화면에 그리기
+        function renderCards(dataList) {
+            gridArchive.innerHTML = '';
+            
+            dataList.forEach((issue, index) => {
+                const card = document.createElement('div');
+                card.className = `newspaper-card ${index === 0 && currentCategory === 'all' ? 'active' : ''}`;
+                
+                // 카드 내부에 호수, 제목, 날짜 출력
+                card.innerHTML = `
+                    <span class="card-vol">제 ${issue.id} 호</span>
+                    <h3 class="card-title">${issue.title}</h3>
+                    <p class="card-date">발행일: ${issue.date}</p>
+                `;
+
+                // 카드를 클릭하면 메인 화면에 띄우는 이벤트
+                card.addEventListener('click', () => {
+                    loadIssue(issue);
+                    document.querySelectorAll('.newspaper-card').forEach(el => el.classList.remove('active'));
+                    card.classList.add('active');
+                });
+
+                gridArchive.appendChild(card);
+            });
+        }
+
+        // 4. 클릭한 신문을 메인 화면(PDF 뷰어)에 출력하기
+        function loadIssue(issue) {
+            pdfViewer.src = issue.fileUrl;
+            document.getElementById('current-issue-title').textContent = `제${issue.id}호 - ${issue.title}`;
+            document.getElementById('header-vol').textContent = `Vol. ${issue.id}`;
+            document.getElementById('header-date').textContent = issue.date;
+        }
+
+        // 5. 카테고리 필터링 기능
+        function filterCategory(category) {
+            currentCategory = category;
+            
+            // 탭 스타일 변경
+            document.querySelectorAll('.category-tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // 리스트 필터링
+            const filtered = category === 'all' ? allIssues : allIssues.filter(item => item.year === category);
+            renderCards(filtered);
+            
+            // 탭을 바꾸면 해당 연도의 가장 최신호를 메인 화면에 띄움
+            if(filtered.length > 0) {
+                loadIssue(filtered[0]);
+                document.querySelectorAll('.newspaper-card')[0].classList.add('active');
             }
         }
 
-        // 특정 호의 PDF를 뷰어에 로드하는 함수
-        function loadIssue(issue) {
-            pdfViewer.src = issue.file;
-            fallbackLink.href = issue.file;
-            currentTitle.textContent = issue.title;
-            issueVol.textContent = `Vol. ${issue.id}`;
-            issueDate.textContent = issue.date;
-        }
-
-        // 스크립트 실행
-        document.addEventListener('DOMContentLoaded', init);
+        // 스크립트 시작
+        document.addEventListener('DOMContentLoaded', fetchNewspapers);
     </script>
 </body>
 </html>
