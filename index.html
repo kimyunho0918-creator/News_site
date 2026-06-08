@@ -421,7 +421,6 @@ function refreshList() {
 
 async function initList() {
   const container = document.getElementById('pdf-list-container');
-  // 오류 검사 로직도 올바르게 수정해 두었습니다.
   if (!CONFIG.owner || CONFIG.owner === 'YOUR_GITHUB_USERNAME' || CONFIG.owner === '본인의_깃허브_아이디를_여기에_적으세요') {
     container.innerHTML = `<div class="state-box"><h3>설정이 필요합니다.</h3><p>코드 하단 CONFIG에서 GitHub 아이디를 입력해주세요.</p></div>`;
     return;
@@ -488,7 +487,8 @@ function initViewer(filePath) {
   document.getElementById('viewer-filename').textContent = filename;
   
   const embedEl = document.getElementById('pdf-embed');
-  embedEl.innerHTML = `<iframe class="pdf-embed-iframe" src="${pdfUrl}" title="PDF: ${filename}"></iframe>`;
+  // 👇 아이패드에서도 PDF가 잘 보이도록 구글 문서 뷰어 기능을 적용했습니다!
+  embedEl.innerHTML = `<iframe class="pdf-embed-iframe" src="https://docs.google.com/viewer?url=${encodeURIComponent(pdfUrl)}&embedded=true" title="PDF: ${filename}"></iframe>`;
   
   document.getElementById('viewer-info').innerHTML = info ? `<tr><td>발행일</td><td>${info.label}</td></tr><tr><td>파일명</td><td>${filename}</td></tr>` : `<tr><td>파일</td><td>${filename}</td></tr>`;
 
