@@ -4,19 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>학교 신문 - 디지털 아카이브</title>
-    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        /* 1. 기본 리셋 및 폰트 설정 */
+        /* 기본 리셋 및 폰트 설정 */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Nanum Myeongjo', serif;
-            background-color: #fcfbfa; /* 오래된 종이 질감을 살린 색상 */
+            background-color: #fcfbfa;
             color: #111;
             line-height: 1.6;
         }
+        .sans-font { font-family: 'Noto Sans KR', sans-serif; }
         .wrap { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
 
-        /* 2. 신문 헤더 (이중선, 명조체 활용) */
+        /* 신문 헤더 */
         .newspaper-header {
             text-align: center;
             border-bottom: 5px double #111;
@@ -39,7 +40,7 @@
             font-size: 0.95rem;
         }
 
-        /* 3. 연도별 카테고리 탭 */
+        /* 카테고리 탭 */
         .category-nav {
             display: flex;
             justify-content: center;
@@ -62,26 +63,21 @@
             color: #fff;
         }
 
-        /* 4. 메인 레이아웃 (뷰어 + 리스트) */
+        /* 메인 레이아웃 */
         .container {
             display: flex;
             gap: 40px;
             align-items: flex-start;
         }
 
-        /* 메인 PDF 뷰어 영역 */
-        .viewer-section {
-            flex: 2.5;
-        }
+        /* 뷰어 영역 */
+        .viewer-section { flex: 2.5; }
         .viewer-header {
             border-bottom: 3px solid #111;
             padding-bottom: 15px;
             margin-bottom: 20px;
         }
-        .viewer-title {
-            font-size: 1.8rem;
-            font-weight: 800;
-        }
+        .viewer-title { font-size: 1.8rem; font-weight: 800; }
         .pdf-frame {
             width: 100%;
             height: 80vh;
@@ -100,7 +96,7 @@
             overflow-y: auto;
         }
         .archive-section::-webkit-scrollbar { width: 6px; }
-        .archive-section::-webkit-scrollbar-thumb { background: #bbb; }
+        .archive-section::-webkit-scrollbar-thumb { background: #bbb; border-radius: 3px; }
         .archive-title {
             font-size: 1.4rem;
             font-weight: 800;
@@ -109,7 +105,7 @@
             margin-bottom: 20px;
         }
 
-        /* 신문 리스트 아이템 디자인 */
+        /* 리스트 아이템 디자인 */
         .issue-list { display: flex; flex-direction: column; gap: 15px; }
         .issue-card {
             padding: 15px;
@@ -123,17 +119,17 @@
             content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
             background-color: transparent; transition: 0.2s;
         }
-        .issue-card:hover { transform: translateX(-5px); border-color: #111; }
+        .issue-card:hover { transform: translateX(-5px); border-color: #111; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
         .issue-card.active { border-color: #111; background-color: #faf9f6; }
         .issue-card.active::before { background-color: #111; }
 
-        .issue-vol { font-weight: 800; font-size: 1.1rem; margin-bottom: 5px; display: block; }
-        .issue-date { color: #555; font-size: 0.9rem; }
+        .issue-vol { font-weight: 800; font-size: 1.1rem; margin-bottom: 5px; display: block; color: #b30000; }
+        .issue-date { color: #555; font-size: 0.9rem; font-family: 'Noto Sans KR', sans-serif; }
 
         /* 상태 메시지 */
-        #status-msg { text-align: center; padding: 50px; font-weight: bold; color: #666; }
+        #status-msg { text-align: center; padding: 50px; font-weight: bold; color: #666; font-family: 'Noto Sans KR', sans-serif; }
 
-        /* 모바일 반응형 */
+        /* 반응형 */
         @media (max-width: 992px) {
             .container { flex-direction: column; }
             .viewer-section, .archive-section { width: 100%; }
@@ -146,9 +142,9 @@
     <div class="wrap">
         <header class="newspaper-header">
             <div class="header-meta">
-                <span id="top-vol">--</span>
-                <span>DIGITAL ARCHIVE</span>
-                <span id="top-date">--</span>
+                <span id="top-vol" class="sans-font">Vol. --</span>
+                <span class="sans-font">DIGITAL ARCHIVE</span>
+                <span id="top-date" class="sans-font">--</span>
             </div>
             <h1>학교 신문</h1>
         </header>
@@ -161,14 +157,14 @@
                 <div class="viewer-header">
                     <h2 class="viewer-title" id="current-title">신문 데이터를 불러오는 중입니다...</h2>
                 </div>
-                <div id="status-msg">GitHub에서 아카이브 목록을 로드하고 있습니다...</div>
+                <div id="status-msg">GitHub에서 파일을 찾고 있습니다...<br>(저장소 이름과 아이디 설정을 확인해주세요)</div>
                 <div class="pdf-frame" id="pdf-container" style="display: none;">
                     <iframe id="pdf-viewer" src="" title="학교 신문 뷰어"></iframe>
                 </div>
             </section>
 
             <aside class="archive-section">
-                <h3 class="archive-title">지난 호 보기</h3>
+                <h3 class="archive-title">📂 지난 호 보기</h3>
                 <div class="issue-list" id="issue-list">
                     </div>
             </aside>
@@ -176,19 +172,19 @@
     </div>
 
     <script>
-        /**
-         * [필수 설정] 본인의 GitHub 환경에 맞게 아래 세 가지 값을 수정하세요.
-         */
-        const GITHUB_USERNAME = 'your_username'; // 예: student123
-        const GITHUB_REPO = 'your_repository';   // 예: school-newspaper
-        const FOLDER_PATH = 'pdfs';              // 저장소 내 PDF 파일이 위치한 폴더명
+        /* =========================================================================
+           [필수 수정 영역] 본인의 GitHub 환경에 맞게 아래 두 줄의 값을 반드시 수정하세요!
+           ========================================================================= */
+        const GITHUB_USERNAME = '본인_깃허브_아이디_입력'; // 예: 'honggildong'
+        const GITHUB_REPO = '본인_저장소_이름_입력';     // 예: 'school-newspaper'
+        const FOLDER_PATH = 'pdfs';                  // 이 부분은 그대로 두세요.
 
         const API_URL = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${FOLDER_PATH}`;
 
         let allIssues = [];
         let currentFilter = 'all';
 
-        // DOM 요소
+        // DOM 요소 캐싱
         const elStatus = document.getElementById('status-msg');
         const elPdfContainer = document.getElementById('pdf-container');
         const elPdfViewer = document.getElementById('pdf-viewer');
@@ -196,16 +192,22 @@
         const elIssueList = document.getElementById('issue-list');
         const elCategoryBar = document.getElementById('category-bar');
 
-        // 1. 데이터 로드 및 파싱 (가장 중요)
+        // 1. GitHub API로 파일 목록 불러오기 및 파싱
         async function fetchNewspapers() {
+            // 만약 설정을 안 바꿨을 경우의 경고 메시지
+            if (GITHUB_USERNAME === '본인_깃허브_아이디_입력' || GITHUB_REPO === '본인_저장소_이름_입력') {
+                elStatus.innerHTML = "<span style='color:red;'>[오류] HTML 파일 하단의 GITHUB_USERNAME과 GITHUB_REPO를 본인의 깃허브 정보로 수정해주세요!</span>";
+                return;
+            }
+
             try {
                 const response = await fetch(API_URL);
-                if (!response.ok) throw new Error('파일 목록을 불러오지 못했습니다. 저장소 설정을 확인하세요.');
+                if (!response.ok) throw new Error('파일을 찾을 수 없습니다. (pdfs 폴더가 없거나 이름이 틀렸을 수 있습니다.)');
                 
                 const files = await response.json();
                 const parsedFiles = [];
 
-                // YY_MM_DD.pdf 정규식 패턴 (예: 26_06_08.pdf)
+                // 정규식: YY_MM_DD.pdf (예: 26_06_08.pdf)
                 const regex = /^(\d{2})_(\d{2})_(\d{2})\.pdf$/i;
 
                 files.forEach(file => {
@@ -217,8 +219,6 @@
                         
                         const fullYear = `20${yy}`;
                         const formattedDate = `${fullYear}년 ${mm}월 ${dd}일`;
-                        
-                        // 정렬을 위한 타임스탬프 계산
                         const dateValue = new Date(`${fullYear}-${mm}-${dd}`).getTime();
 
                         parsedFiles.push({
@@ -232,40 +232,38 @@
                 });
 
                 if (parsedFiles.length === 0) {
-                    elStatus.textContent = "규칙(YY_MM_DD.pdf)에 맞는 파일이 없습니다.";
+                    elStatus.textContent = "pdfs 폴더 안에 규칙(YY_MM_DD.pdf)에 맞는 파일이 없습니다.";
                     return;
                 }
 
-                // 2. 호수(Issue) 부여 및 정렬 로직
-                // 1) 오래된 순으로 오름차순 정렬하여 제1호부터 부여
+                // 2. 호수 자동 계산 로직
+                // 오래된 순(오름차순)으로 정렬하여 제1호부터 차례대로 번호 부여
                 parsedFiles.sort((a, b) => a.dateValue - b.dateValue);
                 parsedFiles.forEach((issue, index) => {
                     issue.issueNumber = index + 1;
                 });
 
-                // 2) 최신호가 리스트 맨 위에 오도록 내림차순 재정렬
+                // 사용자에게 보여줄 때는 최신호가 맨 위로 오도록 내림차순 재정렬
                 parsedFiles.sort((a, b) => b.dateValue - a.dateValue);
                 allIssues = parsedFiles;
 
-                // UI 초기화 렌더링
+                // UI 업데이트
                 elStatus.style.display = 'none';
                 elPdfContainer.style.display = 'block';
 
                 renderCategories();
                 renderIssueList(allIssues);
                 
-                // 가장 최신호 자동 로드
+                // 첫 번째(가장 최신) 신문을 메인 뷰어에 띄움
                 if (allIssues.length > 0) loadIssue(allIssues[0]);
 
             } catch (error) {
                 elStatus.textContent = `오류 발생: ${error.message}`;
-                console.error(error);
             }
         }
 
-        // 3. 카테고리 자동 분류 및 렌더링
+        // 3. 연도별 카테고리 탭 생성
         function renderCategories() {
-            // 중복 없는 연도 배열 추출 후 내림차순 정렬 (2026, 2025...)
             const years = [...new Set(allIssues.map(issue => issue.year))].sort((a, b) => b - a);
             
             elCategoryBar.innerHTML = `<button class="category-btn active" onclick="filterByYear('all')">전체보기</button>`;
@@ -279,19 +277,16 @@
             });
         }
 
-        // 연도별 필터링 실행 함수
+        // 카테고리 필터링 기능
         function filterByYear(year) {
             currentFilter = year;
 
-            // 탭 스타일 변경
             document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
 
-            // 리스트 필터링
             const filteredIssues = year === 'all' ? allIssues : allIssues.filter(issue => issue.year === year);
             renderIssueList(filteredIssues);
 
-            // 필터링된 결과의 가장 첫 번째(최신) 신문을 뷰어에 로드
             if (filteredIssues.length > 0) {
                 loadIssue(filteredIssues[0]);
                 const firstCard = elIssueList.querySelector('.issue-card');
@@ -299,18 +294,17 @@
             }
         }
 
-        // 4. UI 리스트 렌더링
+        // 4. 호수별 리스트 렌더링
         function renderIssueList(issuesToRender) {
             elIssueList.innerHTML = '';
 
             if (issuesToRender.length === 0) {
-                elIssueList.innerHTML = '<p style="color:#666;">해당 연도에 발행된 신문이 없습니다.</p>';
+                elIssueList.innerHTML = '<p style="color:#666;">신문이 없습니다.</p>';
                 return;
             }
 
             issuesToRender.forEach(issue => {
                 const card = document.createElement('div');
-                // 현재 보고 있는 신문과 같으면 active 클래스 유지
                 card.className = `issue-card ${elPdfViewer.src === issue.url ? 'active' : ''}`;
                 
                 card.innerHTML = `
@@ -318,7 +312,6 @@
                     <span class="issue-date">${issue.formattedDate} 발행</span>
                 `;
 
-                // 클릭 시 렌더링 처리
                 card.addEventListener('click', () => {
                     loadIssue(issue);
                     document.querySelectorAll('.issue-card').forEach(el => el.classList.remove('active'));
@@ -328,13 +321,12 @@
                 elIssueList.appendChild(card);
             });
             
-            // 처음 렌더링 시 첫 번째 요소 active 처리 (뷰어가 비어있지 않다면)
             if (elIssueList.firstChild && currentFilter === 'all' && !elIssueList.querySelector('.active')) {
                 elIssueList.firstChild.classList.add('active');
             }
         }
 
-        // 메인 뷰어에 PDF 및 메타데이터 로드
+        // 5. 선택한 신문 뷰어에 표시
         function loadIssue(issue) {
             elPdfViewer.src = issue.url;
             elCurrentTitle.textContent = `제 ${issue.issueNumber} 호`;
@@ -342,7 +334,7 @@
             document.getElementById('top-date').textContent = issue.formattedDate;
         }
 
-        // 페이지 로드 시 앱 실행
+        // 스크립트 구동
         document.addEventListener('DOMContentLoaded', fetchNewspapers);
     </script>
 </body>
