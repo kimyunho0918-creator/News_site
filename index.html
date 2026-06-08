@@ -15,31 +15,19 @@
    DESIGN SYSTEM — Editorial × Modern Glassmorphism
 ═══════════════════════════════════════════════════════════════ */
 :root {
-  /* Dark Navy / Black Base */
-  --bg-color: #07090f;
-  --glass-bg: rgba(15, 18, 25, 0.6);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --border: #2a2c33;
-  --border-2: #383a42;
-  
-  /* Gold Neon / Accent */
-  --gold: #d4af37;
-  --gold-lt: #f3d778;
-  --gold-glow: rgba(212, 175, 55, 0.3);
-  --gold-dim: #8a7322;
-  
-  /* Typography */
-  --white: #f8f9fa;
-  --white-dim: #b0b3b8;
-  --white-mute: #6c7075;
-  --green-ok: #27ae60;
-  --red-err: #e74c3c;
+  /* ... 위쪽 색상 변수들은 동일 ... */
 
-  --f-display: 'Cormorant Garamond', 'Noto Serif KR', serif;
+  /* 
+     신문사 타이포그래피 시스템 수정 
+     - 폰트 우선순위를 가독성이 뛰어난 명조체 위주로 재설정
+  */
+  --f-display: 'Noto Serif KR', 'Cormorant Garamond', serif; /* 제목용: 무게감 있는 Serif */
   --f-mono: 'DM Mono', monospace;
-  --f-body: 'Noto Serif KR', 'Cormorant Garamond', serif;
+  --f-body: 'Noto Serif KR', 'AppleSDGothicNeo-Regular', 'Malgun Gothic', serif; /* 본문용: 가독성 극대화 */
+  
   --max-w: 1320px;
 }
+
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; font-size: 16px; }
