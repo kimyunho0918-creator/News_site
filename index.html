@@ -1,341 +1,1795 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>학교 신문 - 디지털 아카이브</title>
-    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        /* 기본 리셋 및 폰트 설정 */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Nanum Myeongjo', serif;
-            background-color: #fcfbfa;
-            color: #111;
-            line-height: 1.6;
-        }
-        .sans-font { font-family: 'Noto Sans KR', sans-serif; }
-        .wrap { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta name="description" content="고등학교 신문편집부 × 컴퓨터 동아리 공동 편집 시스템"/>
+<title>The School Press — 신문편집부</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600;1,700&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Noto+Serif+KR:wght@300;400;600;700;900&display=swap" rel="stylesheet"/>
 
-        /* 신문 헤더 */
-        .newspaper-header {
-            text-align: center;
-            border-bottom: 5px double #111;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-        }
-        .newspaper-header h1 {
-            font-size: 4.5rem;
-            font-weight: 800;
-            letter-spacing: 15px;
-            margin: 10px 0;
-        }
-        .header-meta {
-            display: flex;
-            justify-content: space-between;
-            border-top: 1px solid #111;
-            border-bottom: 1px solid #111;
-            padding: 8px 10px;
-            font-weight: 700;
-            font-size: 0.95rem;
-        }
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   DESIGN SYSTEM — Dark Editorial × Golden Accent
+   Palette: Obsidian bg · Amber gold · Off-white type · Muted mid
+═══════════════════════════════════════════════════════════════ */
+:root {
+  --bg:         #0c0c0c;
+  --bg-2:       #141414;
+  --bg-3:       #1c1c1c;
+  --bg-4:       #242424;
+  --border:     #2a2a2a;
+  --border-2:   #383838;
+  --gold:       #c9a84c;
+  --gold-lt:    #e8c96a;
+  --gold-dim:   #7a6228;
+  --white:      #f0ece4;
+  --white-dim:  #9a9287;
+  --white-mute: #555047;
+  --red-err:    #c0392b;
+  --green-ok:   #27ae60;
 
-        /* 카테고리 탭 */
-        .category-nav {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 40px;
-            flex-wrap: wrap;
-        }
-        .category-btn {
-            font-family: inherit;
-            background: transparent;
-            border: 1px solid #111;
-            padding: 8px 25px;
-            font-size: 1rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .category-btn:hover, .category-btn.active {
-            background-color: #111;
-            color: #fff;
-        }
+  --f-display: 'Cormorant Garamond', 'Noto Serif KR', serif;
+  --f-mono:    'DM Mono', monospace;
+  --f-body:    'Noto Serif KR', 'Cormorant Garamond', serif;
 
-        /* 메인 레이아웃 */
-        .container {
-            display: flex;
-            gap: 40px;
-            align-items: flex-start;
-        }
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out:   cubic-bezier(0.4, 0, 0.2, 1);
+  --max-w: 1320px;
+}
 
-        /* 뷰어 영역 */
-        .viewer-section { flex: 2.5; }
-        .viewer-header {
-            border-bottom: 3px solid #111;
-            padding-bottom: 15px;
-            margin-bottom: 20px;
-        }
-        .viewer-title { font-size: 1.8rem; font-weight: 800; }
-        .pdf-frame {
-            width: 100%;
-            height: 80vh;
-            border: 1px solid #ccc;
-            box-shadow: 5px 5px 15px rgba(0,0,0,0.05);
-            background-color: #fff;
-        }
-        #pdf-viewer { width: 100%; height: 100%; border: none; }
+/* ── Reset & Base ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; }
+body {
+  background: var(--bg);
+  color: var(--white);
+  font-family: var(--f-body);
+  line-height: 1.65;
+  min-height: 100vh;
+  overflow-x: hidden;
+  /* Subtle noise grain */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+}
+a { color: inherit; text-decoration: none; }
+button { cursor: pointer; border: none; background: none; font: inherit; color: inherit; }
+code {
+  font-family: var(--f-mono);
+  font-size: 0.85em;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  padding: 1px 6px;
+  color: var(--gold);
+}
+::selection { background: var(--gold); color: var(--bg); }
 
-        /* 아카이브 리스트 영역 */
-        .archive-section {
-            flex: 1;
-            border-left: 1px solid #ddd;
-            padding-left: 30px;
-            max-height: 85vh;
-            overflow-y: auto;
-        }
-        .archive-section::-webkit-scrollbar { width: 6px; }
-        .archive-section::-webkit-scrollbar-thumb { background: #bbb; border-radius: 3px; }
-        .archive-title {
-            font-size: 1.4rem;
-            font-weight: 800;
-            border-bottom: 2px solid #111;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-        }
+/* ── Custom Scrollbar ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-2); }
+::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--gold-dim); }
 
-        /* 리스트 아이템 디자인 */
-        .issue-list { display: flex; flex-direction: column; gap: 15px; }
-        .issue-card {
-            padding: 15px;
-            border: 1px solid #eee;
-            background-color: #fff;
-            cursor: pointer;
-            transition: transform 0.2s, border-color 0.2s;
-            position: relative;
-        }
-        .issue-card::before {
-            content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
-            background-color: transparent; transition: 0.2s;
-        }
-        .issue-card:hover { transform: translateX(-5px); border-color: #111; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
-        .issue-card.active { border-color: #111; background-color: #faf9f6; }
-        .issue-card.active::before { background-color: #111; }
+/* ═══════════════════════════════════════════════════════════════
+   MASTHEAD
+═══════════════════════════════════════════════════════════════ */
+.masthead {
+  position: relative;
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+}
 
-        .issue-vol { font-weight: 800; font-size: 1.1rem; margin-bottom: 5px; display: block; color: #b30000; }
-        .issue-date { color: #555; font-size: 0.9rem; font-family: 'Noto Sans KR', sans-serif; }
+/* Top gold rule */
+.masthead::before {
+  content: '';
+  display: block;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, var(--gold) 20%, var(--gold-lt) 50%, var(--gold) 80%, transparent 100%);
+}
 
-        /* 상태 메시지 */
-        #status-msg { text-align: center; padding: 50px; font-weight: bold; color: #666; font-family: 'Noto Sans KR', sans-serif; }
+.masthead__inner {
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 28px 40px 24px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 24px;
+}
 
-        /* 반응형 */
-        @media (max-width: 992px) {
-            .container { flex-direction: column; }
-            .viewer-section, .archive-section { width: 100%; }
-            .archive-section { border-left: none; padding-left: 0; border-top: 1px solid #ddd; padding-top: 30px; max-height: none; }
-            .newspaper-header h1 { font-size: 3rem; letter-spacing: 5px; }
-        }
-    </style>
+.masthead__meta {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--white-mute);
+  line-height: 2;
+  text-transform: uppercase;
+}
+.masthead__meta--right { text-align: right; }
+
+.masthead__brand {
+  text-align: center;
+}
+
+.masthead__title {
+  font-family: var(--f-display);
+  font-size: clamp(30px, 5vw, 68px);
+  font-weight: 300;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  color: var(--white);
+  white-space: nowrap;
+}
+.masthead__title strong {
+  font-weight: 700;
+  font-style: italic;
+  color: var(--gold);
+}
+
+.masthead__rule {
+  width: 48px;
+  height: 1px;
+  background: var(--gold-dim);
+  margin: 10px auto;
+}
+
+.masthead__sub {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--white-dim);
+}
+
+/* Bottom rule band */
+.masthead__band {
+  background: var(--bg-2);
+  border-top: 1px solid var(--border);
+  padding: 7px 40px;
+  max-width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+}
+
+.masthead__band span {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--white-mute);
+}
+
+.masthead__band span + span::before {
+  content: '◆';
+  margin-right: 24px;
+  color: var(--gold-dim);
+  font-size: 6px;
+  vertical-align: middle;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   NAV
+═══════════════════════════════════════════════════════════════ */
+.site-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.site-nav__inner {
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 0 40px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.nav-link {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--white-mute);
+  padding: 11px 20px;
+  border-right: 1px solid var(--border);
+  transition: color 0.2s, background 0.2s;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.nav-link:first-child { border-left: 1px solid var(--border); }
+.nav-link:hover { color: var(--white); background: var(--bg-2); }
+.nav-link.active { color: var(--gold); }
+.nav-link .nav-dot {
+  width: 4px; height: 4px; border-radius: 50%;
+  background: var(--gold);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.nav-link.active .nav-dot { opacity: 1; }
+
+.nav-spacer { flex: 1; }
+
+#nav-date {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--white-mute);
+  padding: 0 0 0 20px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PAGE WRAPPER & TRANSITIONS
+═══════════════════════════════════════════════════════════════ */
+.page-wrapper {
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 48px 40px 100px;
+}
+
+/* View switching */
+.view { display: none; }
+.view.active {
+  display: block;
+  animation: viewIn 0.45s var(--ease-out-expo) both;
+}
+
+@keyframes viewIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION HEADER — reusable
+═══════════════════════════════════════════════════════════════ */
+.sec-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 20px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 12px;
+  margin-bottom: 32px;
+}
+
+.sec-header__left {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+}
+
+.sec-label {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--gold);
+  border: 1px solid var(--gold-dim);
+  padding: 3px 8px;
+}
+
+.sec-title {
+  font-family: var(--f-display);
+  font-size: clamp(22px, 3vw, 36px);
+  font-weight: 300;
+  letter-spacing: 0.03em;
+  color: var(--white);
+}
+
+.sec-count {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  color: var(--white-mute);
+  letter-spacing: 0.1em;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STATS ROW
+═══════════════════════════════════════════════════════════════ */
+.stats-row {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--border);
+  margin-bottom: 40px;
+  overflow: hidden;
+}
+
+.stat-cell {
+  flex: 1;
+  padding: 20px 28px;
+  border-right: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+.stat-cell:last-child { border-right: none; }
+
+.stat-cell::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0;
+  height: 2px;
+  width: 0;
+  background: var(--gold);
+  transition: width 0.6s var(--ease-out-expo);
+}
+.stat-cell.loaded::after { width: 100%; }
+
+.stat-num {
+  font-family: var(--f-display);
+  font-size: clamp(32px, 4vw, 52px);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--white);
+  display: block;
+}
+
+.stat-lbl {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--white-mute);
+  margin-top: 6px;
+  display: block;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PDF CARD GRID
+═══════════════════════════════════════════════════════════════ */
+.pdf-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+}
+
+.pdf-card {
+  background: var(--bg);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: background 0.2s;
+  animation: cardIn 0.5s var(--ease-out-expo) both;
+}
+
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.pdf-card:nth-child(1)  { animation-delay: 0.04s; }
+.pdf-card:nth-child(2)  { animation-delay: 0.08s; }
+.pdf-card:nth-child(3)  { animation-delay: 0.12s; }
+.pdf-card:nth-child(4)  { animation-delay: 0.16s; }
+.pdf-card:nth-child(5)  { animation-delay: 0.20s; }
+.pdf-card:nth-child(6)  { animation-delay: 0.24s; }
+.pdf-card:nth-child(n+7){ animation-delay: 0.28s; }
+
+.pdf-card:hover { background: var(--bg-2); }
+
+/* Gold accent line on hover */
+.pdf-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 2px;
+  background: var(--gold);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s var(--ease-out-expo);
+}
+.pdf-card:hover::before { transform: scaleX(1); }
+
+.card-top {
+  padding: 20px 22px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.card-issue {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+
+.card-date {
+  font-family: var(--f-display);
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.05;
+  color: var(--white);
+}
+
+.card-year {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  color: var(--white-mute);
+  margin-top: 4px;
+  letter-spacing: 0.05em;
+}
+
+.card-pdf-icon {
+  width: 36px; height: 46px;
+  border: 1px solid var(--border-2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.card-pdf-icon::before {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 0; height: 0;
+  border-style: solid;
+  border-width: 0 8px 8px 0;
+  border-color: transparent var(--border-2) transparent transparent;
+  transition: border-color 0.2s;
+}
+.pdf-card:hover .card-pdf-icon { border-color: var(--gold-dim); }
+.pdf-card:hover .card-pdf-icon::before { border-color: transparent var(--gold-dim) transparent transparent; }
+
+.card-pdf-icon span {
+  font-family: var(--f-mono);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  color: var(--gold);
+  font-weight: 500;
+}
+
+.card-bottom {
+  padding: 14px 22px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card-filename {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  color: var(--white-mute);
+  letter-spacing: 0.03em;
+}
+
+.card-arrow {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  color: var(--white-mute);
+  transition: color 0.2s, transform 0.2s;
+  letter-spacing: 0.05em;
+}
+.pdf-card:hover .card-arrow {
+  color: var(--gold);
+  transform: translateX(4px);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STATE BOXES  (loading / error / empty)
+═══════════════════════════════════════════════════════════════ */
+.state-box {
+  padding: 64px 32px;
+  text-align: center;
+  border: 1px solid var(--border);
+  background: var(--bg-2);
+}
+
+.state-icon {
+  font-size: 36px;
+  margin-bottom: 16px;
+  display: block;
+}
+
+.state-box h3 {
+  font-family: var(--f-display);
+  font-size: 22px;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--white);
+  margin-bottom: 8px;
+}
+
+.state-box p {
+  font-family: var(--f-mono);
+  font-size: 12px;
+  color: var(--white-mute);
+  line-height: 1.8;
+  max-width: 420px;
+  margin: 0 auto;
+  letter-spacing: 0.03em;
+}
+
+/* Spinner */
+.spin-ring {
+  width: 40px; height: 40px;
+  margin: 0 auto 20px;
+  border: 2px solid var(--border-2);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Config notice */
+.config-notice {
+  background: var(--bg-2);
+  border: 1px solid var(--gold-dim);
+  border-left: 3px solid var(--gold);
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  font-size: 13px;
+}
+.config-notice p { color: var(--white-dim); line-height: 1.7; }
+.config-notice strong { color: var(--gold); font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.08em; }
+
+/* ═══════════════════════════════════════════════════════════════
+   VIEWER VIEW
+═══════════════════════════════════════════════════════════════ */
+
+/* Breadcrumb */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--white-mute);
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+.breadcrumb a { color: var(--gold); transition: opacity 0.2s; }
+.breadcrumb a:hover { opacity: 0.7; }
+.breadcrumb__sep { color: var(--border-2); }
+
+/* Viewer layout */
+.viewer-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 24px;
+  align-items: start;
+}
+@media (max-width: 960px) { .viewer-layout { grid-template-columns: 1fr; } }
+
+/* Viewer header */
+.viewer-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.viewer-title {
+  font-family: var(--f-display);
+  font-size: clamp(22px, 3.5vw, 40px);
+  font-weight: 300;
+  font-style: italic;
+  line-height: 1.1;
+  color: var(--white);
+}
+.viewer-title em { font-style: normal; font-weight: 600; color: var(--gold); }
+
+.viewer-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* Buttons */
+.btn {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 8px 16px;
+  border: 1px solid var(--border-2);
+  color: var(--white-dim);
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.btn:hover { border-color: var(--gold); color: var(--gold); background: rgba(201,168,76,0.06); }
+
+.btn--gold {
+  background: var(--gold);
+  color: var(--bg);
+  border-color: var(--gold);
+  font-weight: 500;
+}
+.btn--gold:hover { background: var(--gold-lt); border-color: var(--gold-lt); color: var(--bg); }
+
+.btn--back {
+  color: var(--white-mute);
+  border-color: var(--border);
+}
+.btn--back:hover { border-color: var(--white-dim); color: var(--white); }
+
+/* PDF embed frame */
+.pdf-frame {
+  border: 1px solid var(--border);
+  background: var(--bg-2);
+  overflow: hidden;
+}
+
+.pdf-toolbar {
+  background: var(--bg-3);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pdf-toolbar__left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pdf-badge {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  background: var(--gold);
+  color: var(--bg);
+  padding: 3px 8px;
+  font-weight: 500;
+}
+
+.pdf-filename {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  color: var(--white-dim);
+  letter-spacing: 0.04em;
+}
+
+.pdf-toolbar__right {
+  display: flex;
+  gap: 6px;
+}
+
+.tool-btn {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--white-mute);
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.tool-btn:hover { color: var(--gold); border-color: var(--gold-dim); }
+
+#pdf-embed {
+  width: 100%;
+  height: 76vh;
+  min-height: 480px;
+  display: block;
+}
+
+.pdf-embed-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+  background: #1a1a1a;
+}
+
+.pdf-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: var(--bg-3);
+  padding: 40px;
+  text-align: center;
+}
+.pdf-fallback p { font-family: var(--f-mono); font-size: 12px; color: var(--white-mute); }
+
+/* ═══════════════════════════════════════════════════════════════
+   SIDEBAR
+═══════════════════════════════════════════════════════════════ */
+.sidebar { position: sticky; top: 70px; }
+
+.panel {
+  border: 1px solid var(--border);
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+.panel__head {
+  background: var(--bg-3);
+  border-bottom: 1px solid var(--border);
+  padding: 9px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.panel__head-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--gold);
+  flex-shrink: 0;
+}
+
+.panel__title {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--white-dim);
+}
+
+.panel__body { padding: 16px; background: var(--bg-2); }
+
+/* Info table */
+.info-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.info-table tr + tr td { border-top: 1px solid var(--border); }
+.info-table td {
+  padding: 7px 0;
+  font-size: 12px;
+  line-height: 1.4;
+  vertical-align: top;
+}
+.info-table td:first-child {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--white-mute);
+  width: 60px;
+  padding-right: 12px;
+  padding-top: 9px;
+}
+.info-table td:last-child { color: var(--white-dim); }
+
+/* Issue navigation */
+.issue-nav { display: flex; gap: 8px; }
+.issue-nav-btn {
+  flex: 1;
+  padding: 9px 8px;
+  border: 1px solid var(--border);
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--white-mute);
+  text-align: center;
+  transition: all 0.2s;
+  cursor: pointer;
+  background: var(--bg);
+}
+.issue-nav-btn:hover:not(:disabled) { border-color: var(--gold-dim); color: var(--gold); background: rgba(201,168,76,0.06); }
+.issue-nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* Copy link btn */
+.copy-link-btn {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--border);
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--white-mute);
+  text-align: center;
+  transition: all 0.2s;
+  background: var(--bg);
+  margin-top: 8px;
+  cursor: pointer;
+}
+.copy-link-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
+.copy-link-btn.copied { border-color: var(--green-ok); color: var(--green-ok); }
+
+/* Scroll to discussion */
+.scroll-discussion-btn {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--border);
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--white-mute);
+  text-align: center;
+  transition: all 0.2s;
+  background: transparent;
+  cursor: pointer;
+}
+.scroll-discussion-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
+
+/* ═══════════════════════════════════════════════════════════════
+   DISCUSSION / GISCUS SECTION
+═══════════════════════════════════════════════════════════════ */
+.discussion-section {
+  margin-top: 40px;
+}
+
+.discussion-header {
+  padding-bottom: 16px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.discussion-title {
+  font-family: var(--f-display);
+  font-size: 28px;
+  font-weight: 300;
+  font-style: italic;
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.discussion-badge {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  background: rgba(201,168,76,0.15);
+  color: var(--gold);
+  border: 1px solid var(--gold-dim);
+  padding: 3px 10px;
+  vertical-align: middle;
+}
+
+.discussion-sub {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  color: var(--white-mute);
+  letter-spacing: 0.05em;
+}
+
+.giscus-wrap {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  padding: 28px;
+  min-height: 200px;
+}
+
+.giscus-placeholder {
+  text-align: center;
+  padding: 48px 20px;
+}
+
+.giscus-placeholder .g-icon {
+  font-size: 32px;
+  margin-bottom: 16px;
+}
+
+.giscus-placeholder h3 {
+  font-family: var(--f-display);
+  font-size: 22px;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--white);
+  margin-bottom: 10px;
+}
+
+.giscus-placeholder p {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  color: var(--white-mute);
+  line-height: 1.9;
+  max-width: 400px;
+  margin: 0 auto 20px;
+  letter-spacing: 0.03em;
+}
+
+.giscus-placeholder a { color: var(--gold); border-bottom: 1px solid var(--gold-dim); }
+
+.code-block {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--gold);
+  padding: 14px 18px;
+  text-align: left;
+  white-space: pre-wrap;
+  word-break: break-all;
+  line-height: 1.8;
+  margin: 0 auto;
+  max-width: 460px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FOOTER
+═══════════════════════════════════════════════════════════════ */
+.site-footer {
+  border-top: 1px solid var(--border);
+  margin-top: 80px;
+  background: var(--bg);
+}
+
+.footer-rule {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+}
+
+.footer-inner {
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 36px 40px 24px;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 40px;
+}
+
+.footer-brand {
+  font-family: var(--f-display);
+  font-size: 20px;
+  font-weight: 300;
+  font-style: italic;
+  color: var(--white);
+  margin-bottom: 10px;
+}
+.footer-brand strong { color: var(--gold); font-weight: 600; }
+
+.footer-desc {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  color: var(--white-mute);
+  letter-spacing: 0.04em;
+  line-height: 1.9;
+}
+
+.footer-col-title {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 14px;
+}
+
+.footer-list {
+  list-style: none;
+}
+.footer-list li {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  color: var(--white-mute);
+  letter-spacing: 0.04em;
+  line-height: 2.2;
+}
+.footer-list a { transition: color 0.2s; }
+.footer-list a:hover { color: var(--gold); }
+
+.footer-bottom {
+  border-top: 1px solid var(--border);
+  padding: 14px 40px;
+  max-width: var(--max-w);
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.footer-bottom p {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--white-mute);
+  text-transform: uppercase;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .masthead__inner { grid-template-columns: 1fr; text-align: center; padding: 20px 24px 16px; }
+  .masthead__meta { display: none; }
+  .masthead__band { padding: 7px 24px; gap: 16px; flex-wrap: wrap; justify-content: center; }
+  .page-wrapper { padding: 32px 20px 80px; }
+  .site-nav__inner { padding: 0 16px; overflow-x: auto; }
+  #nav-date { display: none; }
+  .stats-row { flex-wrap: wrap; }
+  .stat-cell { min-width: 50%; }
+  .footer-inner { grid-template-columns: 1fr; gap: 24px; }
+  .footer-bottom { flex-direction: column; align-items: flex-start; }
+}
+
+@media (max-width: 480px) {
+  .masthead__title { font-size: 28px; }
+  .pdf-grid { grid-template-columns: 1fr; }
+}
+</style>
 </head>
+
 <body>
-    <div class="wrap">
-        <header class="newspaper-header">
-            <div class="header-meta">
-                <span id="top-vol" class="sans-font">Vol. --</span>
-                <span class="sans-font">DIGITAL ARCHIVE</span>
-                <span id="top-date" class="sans-font">--</span>
-            </div>
-            <h1>학교 신문</h1>
-        </header>
 
-        <nav class="category-nav" id="category-bar">
-            </nav>
+<!-- ═══════════════════════════════════════════════════════════
+     MASTHEAD
+════════════════════════════════════════════════════════════ -->
+<header class="masthead">
+  <div class="masthead__inner">
+    <div class="masthead__meta">
+      신문편집부 × 컴퓨터 동아리<br/>
+      공동 편집 시스템 v1.0<br/>
+      GitHub Pages 정적 배포
+    </div>
+    <div class="masthead__brand">
+      <h1 class="masthead__title">The <strong>School</strong> Press</h1>
+      <div class="masthead__rule"></div>
+      <p class="masthead__sub">신문편집부 &nbsp;×&nbsp; 컴퓨터 동아리 &nbsp;·&nbsp; 공동 편집 플랫폼</p>
+    </div>
+    <div class="masthead__meta masthead__meta--right">
+      <span id="current-date">날짜 로딩 중…</span><br/>
+      인터넷판 · 전자 열람<br/>
+      GitHub Pages 운영
+    </div>
+  </div>
+  <div class="masthead__band">
+    <span>최신호 자동 갱신</span>
+    <span>GitHub API 연동</span>
+    <span>Giscus 회의 보드</span>
+    <span>파일명 YY_MM_DD.pdf</span>
+  </div>
+</header>
 
-        <main class="container">
-            <section class="viewer-section">
-                <div class="viewer-header">
-                    <h2 class="viewer-title" id="current-title">신문 데이터를 불러오는 중입니다...</h2>
-                </div>
-                <div id="status-msg">GitHub에서 파일을 찾고 있습니다...<br>(저장소 이름과 아이디 설정을 확인해주세요)</div>
-                <div class="pdf-frame" id="pdf-container" style="display: none;">
-                    <iframe id="pdf-viewer" src="" title="학교 신문 뷰어"></iframe>
-                </div>
-            </section>
+<!-- ═══════════════════════════════════════════════════════════
+     NAV
+════════════════════════════════════════════════════════════ -->
+<nav class="site-nav">
+  <div class="site-nav__inner">
+    <a class="nav-link active" id="nav-index" href="#" onclick="showView('list');return false;">
+      <span class="nav-dot"></span>발행 목록
+    </a>
+    <a class="nav-link" id="nav-viewer" href="#" style="display:none" onclick="showView('viewer');return false;">
+      <span class="nav-dot"></span>신문 열람
+    </a>
+    <a class="nav-link" id="nav-gh" href="#" target="_blank" rel="noopener">🐙 GitHub</a>
+    <a class="nav-link" id="nav-disc" href="#" target="_blank" rel="noopener">💬 토론</a>
+    <div class="nav-spacer"></div>
+    <span id="nav-date"></span>
+  </div>
+</nav>
 
-            <aside class="archive-section">
-                <h3 class="archive-title">📂 지난 호 보기</h3>
-                <div class="issue-list" id="issue-list">
-                    </div>
-            </aside>
-        </main>
+<!-- ═══════════════════════════════════════════════════════════
+     MAIN
+════════════════════════════════════════════════════════════ -->
+<main class="page-wrapper">
+
+  <!-- ── LIST VIEW ── -->
+  <div class="view active" id="view-list">
+
+    <!-- Stats row -->
+    <div class="stats-row" id="stats-row">
+      <div class="stat-cell">
+        <span class="stat-num" id="stat-total">—</span>
+        <span class="stat-lbl">총 발행 호수</span>
+      </div>
+      <div class="stat-cell">
+        <span class="stat-num" id="stat-years">—</span>
+        <span class="stat-lbl">활동 연도</span>
+      </div>
+      <div class="stat-cell">
+        <span class="stat-num" id="stat-latest">—</span>
+        <span class="stat-lbl">최신 호</span>
+      </div>
+      <div class="stat-cell">
+        <span class="stat-num" id="stat-cache" style="font-size:14px;color:var(--white-mute)">●</span>
+        <span class="stat-lbl">캐시 상태</span>
+      </div>
     </div>
 
-    <script>
-        /* =========================================================================
-           [필수 수정 영역] 본인의 GitHub 환경에 맞게 아래 두 줄의 값을 반드시 수정하세요!
-           ========================================================================= */
-        const GITHUB_USERNAME = '본인_깃허브_아이디_입력'; // 예: 'honggildong'
-        const GITHUB_REPO = '본인_저장소_이름_입력';     // 예: 'school-newspaper'
-        const FOLDER_PATH = 'pdfs';                  // 이 부분은 그대로 두세요.
+    <!-- Section header -->
+    <div class="sec-header">
+      <div class="sec-header__left">
+        <span class="sec-label">Archive</span>
+        <h2 class="sec-title">발행 신문 목록</h2>
+      </div>
+      <span class="sec-count" id="list-count"></span>
+    </div>
 
-        const API_URL = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${FOLDER_PATH}`;
+    <!-- PDF list container -->
+    <div id="pdf-list-container">
+      <div class="state-box">
+        <div class="spin-ring"></div>
+        <h3>목록 불러오는 중…</h3>
+        <p>GitHub API에서 파일 목록을 가져오고 있습니다.</p>
+      </div>
+    </div>
 
-        let allIssues = [];
-        let currentFilter = 'all';
+  </div><!-- /view-list -->
 
-        // DOM 요소 캐싱
-        const elStatus = document.getElementById('status-msg');
-        const elPdfContainer = document.getElementById('pdf-container');
-        const elPdfViewer = document.getElementById('pdf-viewer');
-        const elCurrentTitle = document.getElementById('current-title');
-        const elIssueList = document.getElementById('issue-list');
-        const elCategoryBar = document.getElementById('category-bar');
+  <!-- ── VIEWER VIEW ── -->
+  <div class="view" id="view-viewer">
 
-        // 1. GitHub API로 파일 목록 불러오기 및 파싱
-        async function fetchNewspapers() {
-            // 만약 설정을 안 바꿨을 경우의 경고 메시지
-            if (GITHUB_USERNAME === '본인_깃허브_아이디_입력' || GITHUB_REPO === '본인_저장소_이름_입력') {
-                elStatus.innerHTML = "<span style='color:red;'>[오류] HTML 파일 하단의 GITHUB_USERNAME과 GITHUB_REPO를 본인의 깃허브 정보로 수정해주세요!</span>";
-                return;
-            }
+    <nav class="breadcrumb">
+      <a href="#" onclick="showView('list');return false;">홈</a>
+      <span class="breadcrumb__sep">›</span>
+      <a href="#" onclick="showView('list');return false;">발행 목록</a>
+      <span class="breadcrumb__sep">›</span>
+      <span id="breadcrumb-file">열람 중…</span>
+    </nav>
 
-            try {
-                const response = await fetch(API_URL);
-                if (!response.ok) throw new Error('파일을 찾을 수 없습니다. (pdfs 폴더가 없거나 이름이 틀렸을 수 있습니다.)');
-                
-                const files = await response.json();
-                const parsedFiles = [];
+    <div class="viewer-header">
+      <div>
+        <h2 class="viewer-title" id="viewer-title">신문 열람 중…</h2>
+      </div>
+      <div class="viewer-actions">
+        <a id="btn-newtab" href="#" target="_blank" rel="noopener" class="btn">↗ 새 탭</a>
+        <a id="btn-download" href="#" download class="btn">↓ 다운로드</a>
+        <button class="btn btn--back" onclick="showView('list')">← 목록</button>
+      </div>
+    </div>
 
-                // 정규식: YY_MM_DD.pdf (예: 26_06_08.pdf)
-                const regex = /^(\d{2})_(\d{2})_(\d{2})\.pdf$/i;
+    <div class="viewer-layout">
 
-                files.forEach(file => {
-                    const match = file.name.match(regex);
-                    if (match) {
-                        const yy = match[1];
-                        const mm = match[2];
-                        const dd = match[3];
-                        
-                        const fullYear = `20${yy}`;
-                        const formattedDate = `${fullYear}년 ${mm}월 ${dd}일`;
-                        const dateValue = new Date(`${fullYear}-${mm}-${dd}`).getTime();
+      <!-- Left: PDF + Discussion -->
+      <div>
+        <!-- PDF Frame -->
+        <div class="pdf-frame">
+          <div class="pdf-toolbar">
+            <div class="pdf-toolbar__left">
+              <span class="pdf-badge">PDF</span>
+              <span class="pdf-filename" id="viewer-filename">파일명</span>
+            </div>
+            <div class="pdf-toolbar__right">
+              <a id="tool-newtab" href="#" target="_blank" rel="noopener" class="tool-btn">↗ 새 탭</a>
+              <a id="tool-download" href="#" download class="tool-btn">↓ 저장</a>
+            </div>
+          </div>
+          <div id="pdf-embed"></div>
+        </div>
 
-                        parsedFiles.push({
-                            fileName: file.name,
-                            url: file.download_url,
-                            year: fullYear,
-                            formattedDate: formattedDate,
-                            dateValue: dateValue
-                        });
-                    }
-                });
+        <!-- Discussion -->
+        <section class="discussion-section" id="discussion">
+          <div class="discussion-header">
+            <h3 class="discussion-title">
+              회의 보드
+              <span class="discussion-badge">Live</span>
+            </h3>
+            <p class="discussion-sub">GitHub 계정으로 로그인 후 피드백을 남겨주세요</p>
+          </div>
+          <div class="giscus-wrap">
+            <div id="giscus-container">
+              <div class="giscus-placeholder">
+                <div class="spin-ring" style="margin-bottom:0;width:32px;height:32px;"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
 
-                if (parsedFiles.length === 0) {
-                    elStatus.textContent = "pdfs 폴더 안에 규칙(YY_MM_DD.pdf)에 맞는 파일이 없습니다.";
-                    return;
-                }
+      <!-- Right: Sidebar -->
+      <aside class="sidebar">
 
-                // 2. 호수 자동 계산 로직
-                // 오래된 순(오름차순)으로 정렬하여 제1호부터 차례대로 번호 부여
-                parsedFiles.sort((a, b) => a.dateValue - b.dateValue);
-                parsedFiles.forEach((issue, index) => {
-                    issue.issueNumber = index + 1;
-                });
+        <div class="panel">
+          <div class="panel__head">
+            <div class="panel__head-dot"></div>
+            <span class="panel__title">호 정보</span>
+          </div>
+          <div class="panel__body">
+            <table class="info-table" id="viewer-info">
+              <tr><td>상태</td><td>로딩 중…</td></tr>
+            </table>
+          </div>
+        </div>
 
-                // 사용자에게 보여줄 때는 최신호가 맨 위로 오도록 내림차순 재정렬
-                parsedFiles.sort((a, b) => b.dateValue - a.dateValue);
-                allIssues = parsedFiles;
+        <div class="panel">
+          <div class="panel__head">
+            <div class="panel__head-dot"></div>
+            <span class="panel__title">다른 호 보기</span>
+          </div>
+          <div class="panel__body">
+            <div class="issue-nav">
+              <button class="issue-nav-btn" id="btn-prev" disabled>← 이전</button>
+              <button class="issue-nav-btn" id="btn-next" disabled>다음 →</button>
+            </div>
+            <button class="copy-link-btn" id="copy-link-btn" onclick="copyCurrentLink(this)">
+              🔗 링크 복사
+            </button>
+            <button class="scroll-discussion-btn" onclick="document.getElementById('discussion').scrollIntoView({behavior:'smooth'})">
+              💬 회의 보드로 이동
+            </button>
+          </div>
+        </div>
 
-                // UI 업데이트
-                elStatus.style.display = 'none';
-                elPdfContainer.style.display = 'block';
+        <div class="panel">
+          <div class="panel__head">
+            <div class="panel__head-dot"></div>
+            <span class="panel__title">회의 보드 안내</span>
+          </div>
+          <div class="panel__body">
+            <table class="info-table">
+              <tr><td>참여</td><td>GitHub 계정 로그인</td></tr>
+              <tr><td>저장</td><td>Discussions 자동 저장</td></tr>
+              <tr><td>스레드</td><td>호별 독립 운영</td></tr>
+              <tr><td>기능</td><td>댓글 · 답글 · 반응</td></tr>
+            </table>
+          </div>
+        </div>
 
-                renderCategories();
-                renderIssueList(allIssues);
-                
-                // 첫 번째(가장 최신) 신문을 메인 뷰어에 띄움
-                if (allIssues.length > 0) loadIssue(allIssues[0]);
+        <div class="panel">
+          <div class="panel__head">
+            <div class="panel__head-dot"></div>
+            <span class="panel__title">전체 목록</span>
+          </div>
+          <div class="panel__body">
+            <button class="btn btn--gold" style="width:100%;justify-content:center;" onclick="showView('list')">
+              📰 발행 목록으로
+            </button>
+          </div>
+        </div>
 
-            } catch (error) {
-                elStatus.textContent = `오류 발생: ${error.message}`;
-            }
-        }
+      </aside>
+    </div>
+  </div><!-- /view-viewer -->
 
-        // 3. 연도별 카테고리 탭 생성
-        function renderCategories() {
-            const years = [...new Set(allIssues.map(issue => issue.year))].sort((a, b) => b - a);
-            
-            elCategoryBar.innerHTML = `<button class="category-btn active" onclick="filterByYear('all')">전체보기</button>`;
-            
-            years.forEach(year => {
-                const btn = document.createElement('button');
-                btn.className = 'category-btn';
-                btn.textContent = `${year}년`;
-                btn.onclick = () => filterByYear(year);
-                elCategoryBar.appendChild(btn);
-            });
-        }
+</main>
 
-        // 카테고리 필터링 기능
-        function filterByYear(year) {
-            currentFilter = year;
+<!-- ═══════════════════════════════════════════════════════════
+     FOOTER
+════════════════════════════════════════════════════════════ -->
+<footer class="site-footer">
+  <div class="footer-rule"></div>
+  <div class="footer-inner">
+    <div>
+      <div class="footer-brand">The <strong>School</strong> Press</div>
+      <p class="footer-desc">
+        고등학교 신문편집부 × 컴퓨터 동아리<br/>
+        공동 편집 및 회의 협업 플랫폼.<br/>
+        백엔드 없이 GitHub Pages만으로 운영됩니다.
+      </p>
+    </div>
+    <div>
+      <div class="footer-col-title">업로드 규칙</div>
+      <ul class="footer-list">
+        <li>📁 경로: <code>pdfs/</code></li>
+        <li>📝 형식: <code>YY_MM_DD.pdf</code></li>
+        <li>📌 예시: <code>25_06_01.pdf</code></li>
+        <li>🔄 커밋 후 자동 갱신</li>
+      </ul>
+    </div>
+    <div>
+      <div class="footer-col-title">기술 스택</div>
+      <ul class="footer-list">
+        <li><a href="https://pages.github.com" target="_blank" rel="noopener">GitHub Pages</a></li>
+        <li><a href="https://docs.github.com/rest" target="_blank" rel="noopener">GitHub REST API</a></li>
+        <li><a href="https://giscus.app/ko" target="_blank" rel="noopener">Giscus 댓글 시스템</a></li>
+        <li>HTML · CSS · Vanilla JS</li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© <span id="footer-year"></span> 신문편집부 × 컴퓨터 동아리. GitHub Pages 운영.</p>
+    <p>Powered by GitHub API · Giscus · Static Web</p>
+  </div>
+</footer>
 
-            document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
+<!-- ═══════════════════════════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════════════════════════════ -->
+<script>
+/* ────────────────────────────────────────────────────────────
+   ★  CONFIG  ← 여기만 수정하면 됩니다
+──────────────────────────────────────────────────────────── */
+const CONFIG = {
+  owner:     'YOUR_GITHUB_USERNAME',   // ← GitHub 아이디로 변경
+  repo:      'YOUR_REPO_NAME',         // ← 레포 이름으로 변경
+  pdfFolder: 'pdfs',
+  branch:    'main',
+  /**
+   * Personal Access Token (선택)
+   * 비인증: 시간당 60회 / 인증: 시간당 5,000회
+   * 읽기 전용(contents:read)만 설정하세요.
+   */
+  token:     '',
+  cacheTTL:  5 * 60 * 1000,           // 5분 캐시
+};
 
-            const filteredIssues = year === 'all' ? allIssues : allIssues.filter(issue => issue.year === year);
-            renderIssueList(filteredIssues);
+/* ────────────────────────────────────────────────────────────
+   GISCUS CONFIG ← giscus.app에서 발급받은 값으로 변경
+──────────────────────────────────────────────────────────── */
+const GISCUS = {
+  repo:       'YOUR_GITHUB_USERNAME/YOUR_REPO_NAME', // ← 변경
+  repoId:     'YOUR_REPO_ID',                        // ← 변경
+  category:   '회의록',
+  categoryId: 'YOUR_CATEGORY_ID',                    // ← 변경
+  theme:      'dark_dimmed',
+  lang:       'ko',
+};
 
-            if (filteredIssues.length > 0) {
-                loadIssue(filteredIssues[0]);
-                const firstCard = elIssueList.querySelector('.issue-card');
-                if (firstCard) firstCard.classList.add('active');
-            }
-        }
+/* ────────────────────────────────────────────────────────────
+   UTILITIES
+──────────────────────────────────────────────────────────── */
+const rawUrl  = path => `https://raw.githubusercontent.com/${CONFIG.owner}/${CONFIG.repo}/${CONFIG.branch}/${path}`;
+const contUrl = path => `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${path}`;
 
-        // 4. 호수별 리스트 렌더링
-        function renderIssueList(issuesToRender) {
-            elIssueList.innerHTML = '';
+class RateLimitError extends Error { constructor(m){ super(m); this.name='RateLimitError'; } }
+class ApiError extends Error { constructor(m,s){ super(m); this.name='ApiError'; this.status=s; } }
 
-            if (issuesToRender.length === 0) {
-                elIssueList.innerHTML = '<p style="color:#666;">신문이 없습니다.</p>';
-                return;
-            }
+async function apiFetch(url) {
+  const headers = { 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' };
+  if (CONFIG.token) headers['Authorization'] = `Bearer ${CONFIG.token}`;
+  const res = await fetch(url, { headers });
+  if (res.status === 403 || res.status === 429) {
+    const reset = res.headers.get('X-RateLimit-Reset');
+    const time  = reset ? new Date(parseInt(reset)*1000).toLocaleTimeString('ko-KR') : '잠시 후';
+    throw new RateLimitError(`API 호출 한도 초과. ${time}에 초기화됩니다.`);
+  }
+  if (!res.ok) throw new ApiError(`API 오류: ${res.status} ${res.statusText}`, res.status);
+  return res.json();
+}
 
-            issuesToRender.forEach(issue => {
-                const card = document.createElement('div');
-                card.className = `issue-card ${elPdfViewer.src === issue.url ? 'active' : ''}`;
-                
-                card.innerHTML = `
-                    <span class="issue-vol">제 ${issue.issueNumber} 호</span>
-                    <span class="issue-date">${issue.formattedDate} 발행</span>
-                `;
+/* ── Session Cache ── */
+const Cache = {
+  _k: k => `np_${k}`,
+  get(k) {
+    try {
+      const r = sessionStorage.getItem(this._k(k));
+      if (!r) return null;
+      const { data, ts } = JSON.parse(r);
+      if (Date.now() - ts > CONFIG.cacheTTL) { sessionStorage.removeItem(this._k(k)); return null; }
+      return data;
+    } catch { return null; }
+  },
+  set(k, data) {
+    try { sessionStorage.setItem(this._k(k), JSON.stringify({ data, ts: Date.now() })); }
+    catch(e) { console.warn('Cache write failed:', e); }
+  }
+};
 
-                card.addEventListener('click', () => {
-                    loadIssue(issue);
-                    document.querySelectorAll('.issue-card').forEach(el => el.classList.remove('active'));
-                    card.classList.add('active');
-                });
+/* ── File parsing ── */
+function parseFileName(filename) {
+  const m = filename.match(/^(\d{2})_(\d{2})_(\d{2})\.pdf$/i);
+  if (!m) return null;
+  const [,yy,mm,dd] = m;
+  const year = 2000 + parseInt(yy), month = parseInt(mm), day = parseInt(dd);
+  const date = new Date(year, month-1, day);
+  if (isNaN(date.getTime()) || date.getMonth() !== month-1) return null;
+  return {
+    year, month, day,
+    label:    date.toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric' }),
+    sortKey:  `${year}${mm}${dd}`,
+    weekday:  date.toLocaleDateString('ko-KR', { weekday:'long' }),
+  };
+}
 
-                elIssueList.appendChild(card);
-            });
-            
-            if (elIssueList.firstChild && currentFilter === 'all' && !elIssueList.querySelector('.active')) {
-                elIssueList.firstChild.classList.add('active');
-            }
-        }
+/* ────────────────────────────────────────────────────────────
+   STATE — global app state
+──────────────────────────────────────────────────────────── */
+let APP = {
+  files:        [],   // all parsed PDFs
+  currentFile:  null, // file object currently viewed
+  currentView:  'list',
+};
 
-        // 5. 선택한 신문 뷰어에 표시
-        function loadIssue(issue) {
-            elPdfViewer.src = issue.url;
-            elCurrentTitle.textContent = `제 ${issue.issueNumber} 호`;
-            document.getElementById('top-vol').textContent = `Vol. ${issue.issueNumber}`;
-            document.getElementById('top-date').textContent = issue.formattedDate;
-        }
+/* ────────────────────────────────────────────────────────────
+   VIEW ROUTER — hash-based SPA
+   URLs: #list  |  #viewer?file=pdfs/25_06_01.pdf
+──────────────────────────────────────────────────────────── */
+function showView(view, filePath) {
+  // Update hash
+  if (view === 'viewer' && filePath) {
+    history.pushState(null, '', `#viewer?file=${encodeURIComponent(filePath)}`);
+  } else {
+    history.pushState(null, '', '#list');
+  }
+  _applyView(view, filePath);
+}
 
-        // 스크립트 구동
-        document.addEventListener('DOMContentLoaded', fetchNewspapers);
-    </script>
+function _applyView(view, filePath) {
+  // Toggle panels
+  document.getElementById('view-list').classList.toggle('active', view === 'list');
+  document.getElementById('view-viewer').classList.toggle('active', view === 'viewer');
+
+  // Nav states
+  document.getElementById('nav-index').classList.toggle('active', view === 'list');
+  document.getElementById('nav-viewer').classList.toggle('active', view === 'viewer');
+  document.getElementById('nav-viewer').style.display = view === 'viewer' ? '' : 'none';
+
+  APP.currentView = view;
+
+  if (view === 'viewer' && filePath) {
+    initViewer(filePath);
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Handle browser back/forward
+window.addEventListener('popstate', () => {
+  const { view, file } = parseHash();
+  _applyView(view, file);
+});
+
+function parseHash() {
+  const hash = window.location.hash || '#list';
+  if (hash.startsWith('#viewer')) {
+    const q = hash.split('?')[1] || '';
+    const p = new URLSearchParams(q);
+    return { view: 'viewer', file: p.get('file') };
+  }
+  return { view: 'list', file: null };
+}
+
+/* ────────────────────────────────────────────────────────────
+   LIST VIEW
+──────────────────────────────────────────────────────────── */
+async function initList() {
+  const container = document.getElementById('pdf-list-container');
+
+  if (CONFIG.owner === 'YOUR_GITHUB_USERNAME' || CONFIG.repo === 'YOUR_REPO_NAME') {
+    renderConfigNotice(container);
+    return;
+  }
+
+  setLoading(container);
+
+  try {
+    const cacheKey = `list_${CONFIG.owner}_${CONFIG.repo}`;
+    let files = Cache.get(cacheKey);
+    let fromCache = true;
+
+    if (!files) {
+      fromCache = false;
+      const raw = await apiFetch(contUrl(CONFIG.pdfFolder));
+      if (!Array.isArray(raw)) throw new ApiError('폴더를 읽을 수 없습니다.');
+
+      files = raw
+        .filter(f => f.type === 'file' && /\.pdf$/i.test(f.name))
+        .map(f => {
+          const info = parseFileName(f.name);
+          if (!info) return null;
+          return { name: f.name, path: f.path, downloadUrl: f.download_url || rawUrl(f.path), ...info };
+        })
+        .filter(Boolean)
+        .sort((a,b) => b.sortKey.localeCompare(a.sortKey));
+
+      Cache.set(cacheKey, files);
+    }
+
+    APP.files = files;
+    updateStats(files, fromCache);
+
+    if (files.length === 0) {
+      renderEmpty(container);
+    } else {
+      renderGrid(container, files);
+    }
+  } catch(err) {
+    console.error(err);
+    renderError(container, err);
+  }
+}
+
+function setLoading(container) {
+  container.innerHTML = `<div class="state-box">
+    <div class="spin-ring"></div>
+    <h3>목록 불러오는 중…</h3>
+    <p>GitHub API에서 파일 목록을 가져오고 있습니다.</p>
+  </div>`;
+}
+
+function renderConfigNotice(container) {
+  container.innerHTML = `
+    <div class="config-notice">
+      <span style="font-size:20px;flex-shrink:0">🔧</span>
+      <div>
+        <strong>설정이 필요합니다</strong><br/>
+        <p style="margin-top:6px;">이 파일(<code>index.html</code>) 하단 <code>&lt;script&gt;</code>의
+        <code>CONFIG.owner</code>와 <code>CONFIG.repo</code>를 실제 GitHub 정보로 변경해 주세요.</p>
+      </div>
+    </div>`;
+
+  // Show demo cards
+  const grid = document.createElement('div');
+  grid.className = 'pdf-grid';
+  const demos = [
+    {month:6,day:15,year:2025,weekday:'일요일',issue:'003',name:'25_06_15.pdf'},
+    {month:5,day:20,year:2025,weekday:'화요일',issue:'002',name:'25_05_20.pdf'},
+    {month:4,day:10,year:2025,weekday:'목요일',issue:'001',name:'25_04_10.pdf'},
+  ];
+  demos.forEach(d => {
+    const el = document.createElement('article');
+    el.className = 'pdf-card';
+    el.style.opacity = '0.45';
+    el.style.pointerEvents = 'none';
+    el.innerHTML = buildCardHTML(d, d.issue + ' (예시)');
+    grid.appendChild(el);
+  });
+  container.appendChild(grid);
+}
+
+function renderEmpty(container) {
+  container.innerHTML = `<div class="state-box">
+    <span class="state-icon">📰</span>
+    <h3>아직 업로드된 신문이 없습니다</h3>
+    <p><code>${CONFIG.pdfFolder}/</code> 폴더에 <code>YY_MM_DD.pdf</code> 형식으로<br/>
+    파일을 업로드하면 자동으로 목록이 나타납니다.</p>
+  </div>`;
+}
+
+function renderError(container, err) {
+  let icon = '⚠️', title = '목록을 불러올 수 없습니다', detail = err.message;
+  if (err instanceof RateLimitError) { icon = '⏳'; title = 'API 호출 한도 초과'; }
+  else if (err instanceof ApiError && err.status === 404) {
+    icon = '📁'; title = '폴더를 찾을 수 없습니다';
+    detail = `<code>${CONFIG.pdfFolder}</code> 폴더 또는 <code>CONFIG.owner · CONFIG.repo</code> 값을 확인하세요.`;
+  }
+  container.innerHTML = `<div class="state-box">
+    <span class="state-icon">${icon}</span>
+    <h3>${title}</h3>
+    <p>${detail}</p>
+  </div>`;
+}
+
+function buildCardHTML(file, issueLabel) {
+  return `
+    <div class="card-top">
+      <div>
+        <div class="card-issue">제 ${issueLabel}호</div>
+        <div class="card-date">${file.month}월 ${file.day}일</div>
+        <div class="card-year">${file.year}년 &nbsp;${file.weekday || ''}</div>
+      </div>
+      <div class="card-pdf-icon"><span>PDF</span></div>
+    </div>
+    <div class="card-bottom">
+      <span class="card-filename">${file.name}</span>
+      <span class="card-arrow">→</span>
+    </div>`;
+}
+
+function renderGrid(container, files) {
+  document.getElementById('list-count').textContent = `${files.length}개`;
+  const grid = document.createElement('div');
+  grid.className = 'pdf-grid';
+
+  files.forEach((file, idx) => {
+    const issueNum = String(files.length - idx).padStart(3, '0');
+    const card = document.createElement('article');
+    card.className = 'pdf-card';
+    card.setAttribute('tabindex', '0');
+    card.setAttribute('role', 'button');
+    card.setAttribute('aria-label', `${file.label} 신문 열람`);
+    card.innerHTML = buildCardHTML(file, issueNum);
+
+    const go = () => showView('viewer', file.path);
+    card.addEventListener('click', go);
+    card.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' '){ e.preventDefault(); go(); } });
+    grid.appendChild(card);
+  });
+
+  container.innerHTML = '';
+  container.appendChild(grid);
+}
+
+function updateStats(files, fromCache) {
+  const years = [...new Set(files.map(f => f.year))];
+  const latest = files[0];
+
+  document.getElementById('stat-total').textContent = files.length;
+  document.getElementById('stat-years').textContent = years.length;
+  document.getElementById('stat-latest').textContent = latest ? `${latest.month}/${latest.day}` : '—';
+  document.getElementById('stat-cache').textContent  = fromCache ? '캐시' : 'API';
+  document.getElementById('stat-cache').style.color  = fromCache ? 'var(--gold)' : 'var(--green-ok)';
+  document.getElementById('stat-cache').style.fontSize = '20px';
+
+  // Animate bottom lines
+  document.querySelectorAll('.stat-cell').forEach((el, i) => {
+    setTimeout(() => el.classList.add('loaded'), i * 120);
+  });
+}
+
+/* ────────────────────────────────────────────────────────────
+   VIEWER
+──────────────────────────────────────────────────────────── */
+function initViewer(filePath) {
+  if (!filePath) { showView('list'); return; }
+
+  const filename = filePath.split('/').pop();
+  const info     = parseFileName(filename);
+  APP.currentFile = info ? { ...info, name: filename, path: filePath } : { name: filename, path: filePath };
+
+  // Title
+  const title = info ? `${info.year}년 ${info.month}월 ${info.day}일` : filename;
+  document.getElementById('viewer-title').innerHTML =
+    info ? `<em>${info.month}월 ${info.day}일</em> &nbsp;— ${info.year}년 신문` : filename;
+  document.getElementById('breadcrumb-file').textContent = filename;
+  document.getElementById('viewer-filename').textContent = filename;
+  document.title = `${title} — The School Press`;
+
+  // PDF URL
+  const pdfUrl = rawUrl(filePath);
+
+  // Embed
+  const embedEl = document.getElementById('pdf-embed');
+  embedEl.innerHTML = '';
+  const iframe = document.createElement('iframe');
+  iframe.className = 'pdf-embed-iframe';
+  iframe.src   = pdfUrl;
+  iframe.title = `PDF: ${filename}`;
+  iframe.loading = 'lazy';
+  iframe.onerror = () => {
+    embedEl.innerHTML = `<div class="pdf-fallback">
+      <p>브라우저에서 PDF를 직접 표시할 수 없습니다.</p>
+      <a href="${pdfUrl}" target="_blank" rel="noopener" class="btn btn--gold">새 탭에서 열기</a>
+    </div>`;
+  };
+  embedEl.appendChild(iframe);
+
+  // Buttons
+  document.getElementById('btn-newtab').href    = pdfUrl;
+  document.getElementById('btn-download').href  = pdfUrl;
+  document.getElementById('btn-download').download = filename;
+  document.getElementById('tool-newtab').href   = pdfUrl;
+  document.getElementById('tool-download').href = pdfUrl;
+  document.getElementById('tool-download').download = filename;
+
+  // Info table
+  document.getElementById('viewer-info').innerHTML = info ? `
+    <tr><td>발행일</td><td>${info.label}</td></tr>
+    <tr><td>요일</td><td>${info.weekday}</td></tr>
+    <tr><td>파일명</td><td>${filename}</td></tr>
+    <tr><td>경로</td><td style="word-break:break-all">${filePath}</td></tr>
+  ` : `<tr><td>파일</td><td>${filename}</td></tr>`;
+
+  // Prev / Next navigation
+  setupIssueNav(filePath);
+
+  // Giscus
+  loadGiscus(filePath);
+}
+
+function setupIssueNav(currentPath) {
+  const files = APP.files;
+  if (!files.length) return;
+
+  const idx = files.findIndex(f => f.path === currentPath);
+  const prevBtn = document.getElementById('btn-prev'); // 이전 = 더 오래된 (idx+1)
+  const nextBtn = document.getElementById('btn-next'); // 다음 = 더 최신 (idx-1)
+
+  prevBtn.disabled = idx >= files.length - 1;
+  nextBtn.disabled = idx <= 0;
+
+  prevBtn.onclick = () => { if (idx < files.length-1) showView('viewer', files[idx+1].path); };
+  nextBtn.onclick = () => { if (idx > 0)              showView('viewer', files[idx-1].path); };
+}
+
+/* ────────────────────────────────────────────────────────────
+   GISCUS
+──────────────────────────────────────────────────────────── */
+function loadGiscus(term) {
+  const container = document.getElementById('giscus-container');
+
+  // Remove old giscus instance if re-navigating
+  const old = container.querySelector('.giscus, script[src*="giscus"]');
+  if (old) old.remove();
+  const frame = document.querySelector('iframe.giscus-frame');
+  if (frame) frame.remove();
+
+  if (GISCUS.repoId === 'YOUR_REPO_ID') {
+    container.innerHTML = `<div class="giscus-placeholder">
+      <div class="g-icon">💬</div>
+      <h3>회의 보드 설정이 필요합니다</h3>
+      <p>
+        <a href="https://giscus.app/ko" target="_blank" rel="noopener">giscus.app</a>에서
+        레포를 연결한 후,<br/>
+        이 파일 하단 <code>GISCUS</code> 객체에 발급받은 값을 입력하세요.
+      </p>
+      <pre class="code-block">GISCUS.repoId     = '발급받은 Repo ID'
+GISCUS.categoryId = '발급받은 Category ID'
+// term (자동 설정됨):
+// '${term}'</pre>
+    </div>`;
+    return;
+  }
+
+  container.innerHTML = '';
+  const s = document.createElement('script');
+  s.src = 'https://giscus.app/client.js';
+  s.setAttribute('data-repo',              GISCUS.repo);
+  s.setAttribute('data-repo-id',           GISCUS.repoId);
+  s.setAttribute('data-category',          GISCUS.category);
+  s.setAttribute('data-category-id',       GISCUS.categoryId);
+  s.setAttribute('data-mapping',           'specific');
+  s.setAttribute('data-term',              term);   // 파일경로 = 독립 스레드
+  s.setAttribute('data-strict',            '1');
+  s.setAttribute('data-reactions-enabled', '1');
+  s.setAttribute('data-emit-metadata',     '0');
+  s.setAttribute('data-input-position',    'top');
+  s.setAttribute('data-theme',             GISCUS.theme);
+  s.setAttribute('data-lang',              GISCUS.lang);
+  s.setAttribute('crossorigin',            'anonymous');
+  s.async = true;
+  container.appendChild(s);
+}
+
+/* ────────────────────────────────────────────────────────────
+   COPY LINK
+──────────────────────────────────────────────────────────── */
+function copyCurrentLink(btn) {
+  const url = window.location.href;
+  (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject())
+    .then(() => {
+      btn.textContent = '✓ 복사됨!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = '🔗 링크 복사'; btn.classList.remove('copied'); }, 2000);
+    })
+    .catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = url; document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta);
+      btn.textContent = '✓ 복사됨!';
+      setTimeout(() => { btn.textContent = '🔗 링크 복사'; }, 2000);
+    });
+}
+
+/* ────────────────────────────────────────────────────────────
+   INIT
+──────────────────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  // Date displays
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric', weekday:'long' });
+  document.getElementById('current-date').textContent = dateStr;
+  document.getElementById('nav-date').textContent     = dateStr;
+  document.getElementById('footer-year').textContent  = now.getFullYear();
+
+  // Nav GitHub links
+  const ghBase = `https://github.com/${CONFIG.owner}/${CONFIG.repo}`;
+  document.getElementById('nav-gh').href   = ghBase;
+  document.getElementById('nav-disc').href = `${ghBase}/discussions`;
+
+  // Route
+  const { view, file } = parseHash();
+  if (view === 'viewer' && file) {
+    // Load list in background for nav
+    initList().then(() => {
+      _applyView('viewer', file);
+    });
+  } else {
+    initList();
+  }
+});
+</script>
+
 </body>
 </html>
