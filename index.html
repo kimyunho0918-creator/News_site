@@ -425,7 +425,7 @@ function refreshList() {
 
 async function initList() {
   const container = document.getElementById('pdf-list-container');
-  if (CONFIG.owner === 'kimyunho0918' || CONFIG.owner === 'YOUR_GITHUB_USERNAME') {
+  if (CONFIG.owner === 'kimyunho0918-creator' || CONFIG.owner === 'YOUR_GITHUB_USERNAME') {
     container.innerHTML = `<div class="state-box"><h3>설정이 필요합니다.</h3><p>코드 하단 CONFIG에서 GitHub 아이디를 입력해주세요.</p></div>`;
     return;
   }
