@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>학교 신문 - 온라인 에디션</title>
+    <!-- 신문 감성을 위한 명조체 웹 폰트 로드 -->
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* 기본 리셋 및 폰트 설정 */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Nanum Myeongjo', serif;
+            background-color: #fdfdfc; /* 살짝 오래된 종이 느낌의 아주 밝은 아이보리 */
+            color: #1a1a1a;
+            line-height: 1.6;
+        }
+
+        .wrap {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* 신문 헤더 스타일링 */
+        .newspaper-header {
+            text-align: center;
+            border-bottom: 4px solid #1a1a1a;
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+        }
+
+        .header-info {
+            display: flex;
+            justify-content: space-between;
+            border-top: 1px solid #1a1a1a;
+            border-bottom: 1px solid #1a1a1a;
+            padding: 5px 0;
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        .newspaper-title {
+            font-size: 5rem;
+            font-weight: 800;
+            letter-spacing: 10px;
+            margin: 20px 0;
+        }
+
+        .header-motto {
+            border-top: 2px solid #1a1a1a;
+            padding-top: 5px;
+            font-style: italic;
+            color: #4a4a4a;
+        }
+
+        /* 레이아웃 구성 */
+        .container {
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+        }
+
+        .viewer-section {
+            flex: 3;
+        }
+
+        .archive-section {
+            flex: 1;
+            border-left: 1px solid #ccc;
+            padding-left: 30px;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            border-bottom: 2px solid #1a1a1a;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        /* PDF 뷰어 컨테이너 (16:9 또는 A4 비율 유지) */
+        .pdf-container {
+            width: 100%;
+            height: 80vh; /* 화면 높이의 80% 사용 */
+            border: 1px solid #ccc;
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
+            background-color: #fff;
+        }
+
+        #pdf-viewer {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* 아카이브 리스트 */
+        .issue-list {
+            list-style: none;
+        }
+
+        .issue-list li {
+            padding: 10px 0;
+            border-bottom: 1px dashed #ccc;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .issue-list li:hover {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+
+        .issue-list li.active {
+            font-weight: bold;
+            color: #b30000; /* 강조 색상 */
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 20px 0;
+            border-top: 1px solid #ccc;
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        /* 모바일 반응형 처리 */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            .archive-section {
+                border-left: none;
+                padding-left: 0;
+                border-top: 2px solid #1a1a1a;
+                padding-top: 20px;
+                width: 100%;
+            }
+            .newspaper-title {
+                font-size: 3rem;
+                letter-spacing: 5px;
+            }
+            .pdf-container {
+                height: 60vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <!-- 신문 헤더 영역 -->
+        <header class="newspaper-header">
+            <div class="header-info">
+                <span id="issue-vol">Vol. 12</span>
+                <span>정기발행</span>
+                <span id="issue-date">2026년 6월 8일 월요일</span>
+            </div>
+            <h1 class="newspaper-title">학교 신문</h1>
+            <div class="header-motto">
+                <p>세상을 보는 맑은 창, 학생들의 목소리를 담습니다</p>
+            </div>
+        </header>
+
+        <!-- 메인 콘텐츠 영역 -->
+        <main class="container">
+            <section class="viewer-section">
+                <h2 class="section-title">📰 <span id="current-issue-title">제12호 (2026년 6월)</span></h2>
+                
+                <!-- PDF 뷰어 (iframe 활용) -->
+                <div class="pdf-container">
+                    <iframe id="pdf-viewer" src="latest.pdf" title="신문 뷰어">
+                        <p>현재 브라우저에서 PDF를 직접 볼 수 없습니다. <a id="fallback-link" href="latest.pdf">여기에서 PDF를 다운로드</a> 하세요.</p>
+                    </iframe>
+                </div>
+            </section>
+
+            <!-- 지난 호 아카이브 (사이드바) -->
+            <aside class="archive-section">
+                <h2 class="section-title">📂 지난 호 보기</h2>
+                <ul id="issue-list" class="issue-list">
+                    <!-- JavaScript를 통해 동적으로 리스트가 생성됩니다. -->
+                </ul>
+            </aside>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 OO고등학교 신문부 & 컴퓨터부. All Rights Reserved.</p>
+        </footer>
+    </div>
+
+    <script>
+        // 신문부가 관리해야 할 유일한 데이터 공간입니다.
+        // 새로운 호가 나오면 GitHub 폴더에 PDF를 넣고 여기에 정보만 추가하면 됩니다.
+        const issues = [
+            {
+                id: 12,
+                title: "제12호 (2026년 6월)",
+                date: "2026년 6월 8일 월요일",
+                file: "issue_12.pdf" // 실제 GitHub 저장소에 올라갈 파일명
+            },
+            {
+                id: 11,
+                title: "제11호 (2026년 5월)",
+                date: "2026년 5월 10일 월요일",
+                file: "issue_11.pdf"
+            },
+            {
+                id: 10,
+                title: "제10호 (2026년 4월 - 중간고사 특집)",
+                date: "2026년 4월 5일 금요일",
+                file: "issue_10.pdf"
+            }
+        ];
+
+        // DOM 요소 캐싱
+        const issueListEl = document.getElementById('issue-list');
+        const pdfViewer = document.getElementById('pdf-viewer');
+        const fallbackLink = document.getElementById('fallback-link');
+        const currentTitle = document.getElementById('current-issue-title');
+        const issueVol = document.getElementById('issue-vol');
+        const issueDate = document.getElementById('issue-date');
+
+        // 초기화 함수
+        function init() {
+            renderArchiveList();
+            // 가장 최근 호(배열의 첫 번째 요소)를 로드
+            if (issues.length > 0) {
+                loadIssue(issues[0]);
+            }
+        }
+
+        // 사이드바 리스트 렌더링
+        function renderArchiveList() {
+            issueListEl.innerHTML = '';
+            
+            issues.forEach((issue) => {
+                const li = document.createElement('li');
+                li.textContent = issue.title;
+                
+                // 클릭 시 해당 호수로 뷰어 업데이트
+                li.addEventListener('click', () => {
+                    loadIssue(issue);
+                    
+                    // 활성화 스타일 적용
+                    document.querySelectorAll('.issue-list li').forEach(el => el.classList.remove('active'));
+                    li.classList.add('active');
+                });
+                
+                issueListEl.appendChild(li);
+            });
+
+            // 첫 번째 항목에 초기 active 클래스 부여
+            if (issueListEl.firstChild) {
+                issueListEl.firstChild.classList.add('active');
+            }
+        }
+
+        // 특정 호의 PDF를 뷰어에 로드하는 함수
+        function loadIssue(issue) {
+            pdfViewer.src = issue.file;
+            fallbackLink.href = issue.file;
+            currentTitle.textContent = issue.title;
+            issueVol.textContent = `Vol. ${issue.id}`;
+            issueDate.textContent = issue.date;
+        }
+
+        // 스크립트 실행
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
