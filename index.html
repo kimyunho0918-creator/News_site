@@ -442,9 +442,9 @@ const CMAP_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/'
 const contUrl = path =>
   `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${path}`;
 
-/* PDF 절대 경로 (GitHub Pages URL) */
+/* PDF 절대 경로 — raw.githubusercontent.com 사용 (CORS 없음, Pages 불필요) */
 const pdfUrl = filePath =>
-  `https://${CONFIG.owner}.github.io/${CONFIG.repo}/${filePath}`;
+  `https://raw.githubusercontent.com/${CONFIG.owner}/${CONFIG.repo}/${CONFIG.branch}/${filePath}`;
 
 class RateLimitError extends Error { constructor(m){ super(m); this.name='RateLimitError'; } }
 class ApiError extends Error { constructor(m,s){ super(m); this.name='ApiError'; this.status=s; } }
@@ -769,37 +769,41 @@ function initViewer(filePath) {
   </div>`;
   if (pageInfoEl) pageInfoEl.textContent = '';
 
+  dbg('info', 'PDF 로드 시작', absolutePdfUrl);
+
   pdfjsLib.getDocument({ url: absolutePdfUrl, cMapUrl: CMAP_URL, cMapPacked: true }).promise
     .then(pdf => {
+      dbg('ok', `PDF 로드 성공 — 총 ${pdf.numPages}페이지`, filename);
       container.innerHTML = '';
       if (pageInfoEl) pageInfoEl.textContent = `총 ${pdf.numPages}페이지`;
 
-      /* 페이지 순서대로 렌더링 */
       const renderPage = num => {
         pdf.getPage(num).then(page => {
-          /* 뷰어 너비에 맞게 스케일 조정 */
           const maxW     = container.clientWidth * 0.9;
           const baseVP   = page.getViewport({ scale: 1 });
           const scale    = Math.min(1.8, maxW / baseVP.width);
           const viewport = page.getViewport({ scale });
-
           const canvas       = document.createElement('canvas');
           canvas.width       = viewport.width;
           canvas.height      = viewport.height;
           container.appendChild(canvas);
           page.render({ canvasContext: canvas.getContext('2d'), viewport });
-
           if (num < pdf.numPages) renderPage(num + 1);
         });
       };
       renderPage(1);
     })
     .catch(err => {
-      console.error('[viewer]', err);
+      dbg('err', `PDF 로드 실패: ${err.message}`,
+        `파일: ${filename} / URL: ${absolutePdfUrl}`,
+        '새 탭에서 직접 열기',
+        () => window.open(absolutePdfUrl, '_blank')
+      );
       container.innerHTML = `<div style="padding:40px;text-align:center;">
         <h3 style="color:#c0392b;margin-bottom:10px;">PDF 로드 실패</h3>
-        <p style="color:var(--text-mute);margin-bottom:20px;">
-          GitHub Pages 배포가 완료됐는지 확인하거나, 새 탭으로 직접 열어주세요.
+        <p style="color:var(--text-mute);margin-bottom:8px;">오류: ${err.message}</p>
+        <p style="color:var(--text-mute);margin-bottom:20px;font-size:12px;">
+          아래 버튼으로 PDF를 직접 열어주세요.
         </p>
         <a href="${absolutePdfUrl}" target="_blank" class="btn">↗ 새 탭에서 바로 열기</a>
       </div>`;
