@@ -694,38 +694,64 @@ function renderGrid(container, files) {
 }
 
 async function renderThumbnails(files) {
+  dbg('info', `썸네일 생성 시작 (${files.length}개)`, '첫 페이지를 순서대로 렌더링합니다.');
+
   for (const file of files) {
     const canvas = document.getElementById(`thumb-${file.sortKey}`);
     const msgEl  = document.getElementById(`thumb-msg-${file.sortKey}`);
     if (!canvas) continue;
 
-    try {
-      const url = pdfUrl(file.path);
-      const pdf  = await pdfjsLib.getDocument({ url, cMapUrl: CMAP_URL, cMapPacked: true }).promise;
-      const page = await pdf.getPage(1);
+    // 뷰어와 동일한 URL 우선순위 사용
+    const mediaUrl = `https://media.githubusercontent.com/media/${CONFIG.owner}/${CONFIG.repo}/${CONFIG.branch}/${file.path}`;
+    const rawUrl   = `https://raw.githubusercontent.com/${CONFIG.owner}/${CONFIG.repo}/${CONFIG.branch}/${file.path}`;
+    const urls = [
+      file.downloadUrl || mediaUrl,
+      mediaUrl,
+      rawUrl,
+    ].filter((v, i, arr) => arr.indexOf(v) === i); // 중복 제거
 
-      /* 카드 썸네일에 맞는 스케일 계산 */
-      const thumbW  = canvas.parentElement.clientWidth || 220;
-      const baseVP  = page.getViewport({ scale: 1 });
-      const scale   = thumbW / baseVP.width;
-      const viewport = page.getViewport({ scale });
+    let loaded = false;
 
-      canvas.width  = viewport.width;
-      canvas.height = viewport.height;
+    for (const url of urls) {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-      await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+        const buffer = await res.arrayBuffer();
 
-      /* 성공: 로딩 메시지 숨기고 캔버스 표시 */
-      if (msgEl) msgEl.style.display = 'none';
-      canvas.style.display = 'block';
+        // LFS 포인터 감지
+        const header = new TextDecoder().decode(buffer.slice(0, 50));
+        if (header.includes('version https://git-lfs')) throw new Error('LFS_POINTER');
+        if (!header.startsWith('%PDF')) throw new Error('Invalid PDF structure');
 
-    } catch(e) {
-      /* 실패: 로딩 메시지를 에러 아이콘으로 교체 */
-      if (msgEl) {
-        msgEl.innerHTML = `<span style="font-size:28px;">📄</span><span>미리보기 없음</span>`;
-        msgEl.querySelector('.mini-spin') && (msgEl.querySelector('.mini-spin').style.display = 'none');
+        const pdf  = await pdfjsLib.getDocument({ data: buffer, cMapUrl: CMAP_URL, cMapPacked: true }).promise;
+        const page = await pdf.getPage(1);
+
+        const thumbW   = canvas.parentElement.clientWidth || 220;
+        const baseVP   = page.getViewport({ scale: 1 });
+        const scale    = thumbW / baseVP.width;
+        const viewport = page.getViewport({ scale });
+
+        canvas.width  = viewport.width;
+        canvas.height = viewport.height;
+        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+
+        if (msgEl) msgEl.style.display = 'none';
+        canvas.style.display = 'block';
+
+        dbg('ok', `썸네일 완료: ${file.name}`, `${(buffer.byteLength/1024).toFixed(0)} KB`);
+        loaded = true;
+        break; // 성공하면 다음 URL 시도 안 함
+
+      } catch(e) {
+        const reason = e.message === 'LFS_POINTER' ? 'LFS 포인터' : e.message;
+        dbg('warn', `썸네일 실패 (${file.name}): ${reason}`, url === urls[urls.length-1] ? '모든 URL 실패' : '다음 URL 시도 중…');
       }
-      console.warn(`썸네일 실패 (${file.name}):`, e.message);
+    }
+
+    // 모든 URL 실패 시 에러 아이콘 표시
+    if (!loaded && msgEl) {
+      msgEl.innerHTML = `<span style="font-size:28px;">📄</span><span style="font-family:var(--f-mono);font-size:10px;color:var(--text-mute);">미리보기 없음</span>`;
     }
   }
 }
