@@ -769,43 +769,72 @@ function initViewer(filePath) {
   </div>`;
   if (pageInfoEl) pageInfoEl.textContent = '';
 
-  dbg('info', 'PDF 로드 시작', absolutePdfUrl);
+  dbg('info', 'PDF URL 접근 테스트 중…', absolutePdfUrl);
 
-  pdfjsLib.getDocument({ url: absolutePdfUrl, cMapUrl: CMAP_URL, cMapPacked: true }).promise
-    .then(pdf => {
-      dbg('ok', `PDF 로드 성공 — 총 ${pdf.numPages}페이지`, filename);
-      container.innerHTML = '';
-      if (pageInfoEl) pageInfoEl.textContent = `총 ${pdf.numPages}페이지`;
+  // ── 1단계: URL 접근 가능 여부 먼저 확인 ──
+  fetch(absolutePdfUrl, { method: 'HEAD' })
+    .then(res => {
+      if (!res.ok) {
+        // HTTP 오류 → 원인 명확히 표시
+        const reasons = {
+          404: '파일이 없습니다. 레포에 PDF가 커밋됐는지 확인하세요.',
+          403: '접근 거부(403). 레포지토리가 Private으로 설정돼 있을 수 있습니다.',
+          401: '인증 필요(401). 레포지토리가 Private입니다.',
+        };
+        const reason = reasons[res.status] || `HTTP ${res.status} 오류`;
+        dbg('err', `PDF URL 접근 실패: ${res.status}`, reason);
+        container.innerHTML = `<div style="padding:40px;text-align:center;">
+          <h3 style="color:#c0392b;margin-bottom:8px;">PDF 접근 불가 (${res.status})</h3>
+          <p style="color:var(--text-mute);margin-bottom:20px;">${reason}</p>
+          <a href="https://github.com/${CONFIG.owner}/${CONFIG.repo}/settings" target="_blank" class="btn">⚙️ 레포 설정 열기</a>
+        </div>`;
+        return;
+      }
 
-      const renderPage = num => {
-        pdf.getPage(num).then(page => {
-          const maxW     = container.clientWidth * 0.9;
-          const baseVP   = page.getViewport({ scale: 1 });
-          const scale    = Math.min(1.8, maxW / baseVP.width);
-          const viewport = page.getViewport({ scale });
-          const canvas       = document.createElement('canvas');
-          canvas.width       = viewport.width;
-          canvas.height      = viewport.height;
-          container.appendChild(canvas);
-          page.render({ canvasContext: canvas.getContext('2d'), viewport });
-          if (num < pdf.numPages) renderPage(num + 1);
+      dbg('ok', `URL 접근 OK (${res.status}) — 이제 PDF 렌더링 시작`);
+
+      // ── 2단계: 파일을 직접 fetch → ArrayBuffer로 pdf.js에 전달 ──
+      // URL을 worker에서 재요청하지 않고 직접 데이터를 넘겨서 CORS 우회
+      return fetch(absolutePdfUrl)
+        .then(r => r.arrayBuffer())
+        .then(buffer => {
+          dbg('ok', `PDF 다운로드 완료 (${(buffer.byteLength/1024).toFixed(0)} KB)`);
+          return pdfjsLib.getDocument({ data: buffer, cMapUrl: CMAP_URL, cMapPacked: true }).promise;
+        })
+        .then(pdf => {
+          dbg('ok', `PDF 렌더링 성공 — 총 ${pdf.numPages}페이지`);
+          container.innerHTML = '';
+          if (pageInfoEl) pageInfoEl.textContent = `총 ${pdf.numPages}페이지`;
+
+          const renderPage = num => {
+            pdf.getPage(num).then(page => {
+              const maxW     = container.clientWidth * 0.9 || 600;
+              const baseVP   = page.getViewport({ scale: 1 });
+              const scale    = Math.min(1.8, maxW / baseVP.width);
+              const viewport = page.getViewport({ scale });
+              const canvas       = document.createElement('canvas');
+              canvas.width       = viewport.width;
+              canvas.height      = viewport.height;
+              container.appendChild(canvas);
+              page.render({ canvasContext: canvas.getContext('2d'), viewport });
+              if (num < pdf.numPages) renderPage(num + 1);
+            });
+          };
+          renderPage(1);
         });
-      };
-      renderPage(1);
     })
     .catch(err => {
-      dbg('err', `PDF 로드 실패: ${err.message}`,
-        `파일: ${filename} / URL: ${absolutePdfUrl}`,
-        '새 탭에서 직접 열기',
-        () => window.open(absolutePdfUrl, '_blank')
+      // fetch 자체가 실패 = 네트워크 오류 or CORS
+      dbg('err', `네트워크 오류: ${err.message}`,
+        'fetch() 자체가 실패했습니다. 네트워크 연결 또는 CORS 문제일 수 있습니다.'
       );
       container.innerHTML = `<div style="padding:40px;text-align:center;">
-        <h3 style="color:#c0392b;margin-bottom:10px;">PDF 로드 실패</h3>
-        <p style="color:var(--text-mute);margin-bottom:8px;">오류: ${err.message}</p>
+        <h3 style="color:#c0392b;margin-bottom:8px;">네트워크 오류</h3>
+        <p style="color:var(--text-mute);margin-bottom:8px;">${err.message}</p>
         <p style="color:var(--text-mute);margin-bottom:20px;font-size:12px;">
-          아래 버튼으로 PDF를 직접 열어주세요.
+          아래 링크를 눌러 PDF가 직접 열리는지 확인해주세요.
         </p>
-        <a href="${absolutePdfUrl}" target="_blank" class="btn">↗ 새 탭에서 바로 열기</a>
+        <a href="${absolutePdfUrl}" target="_blank" class="btn">↗ PDF 직접 열기</a>
       </div>`;
     });
 }
