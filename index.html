@@ -177,16 +177,12 @@ code { font-family: var(--f-mono); font-size: 0.85em; background: var(--bg-3); b
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
-/* 캔버스: 썸네일 비율로 맞추기 */
+/* 캔버스: object-fit은 canvas에 적용 안 됨 → JS에서 직접 크롭 처리 */
 .card-thumb canvas {
   position: absolute;
   top: 0; left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: top center;
+  display: none;
   z-index: 1;
-  display: none; /* JS에서 렌더 완료 후 표시 */
   transition: transform 0.3s ease;
 }
 .pdf-card:hover .card-thumb canvas { transform: scale(1.03); }
@@ -211,28 +207,71 @@ code { font-family: var(--f-mono); font-size: 0.85em; background: var(--bg-3); b
 .viewer-title em { font-style: normal; font-weight: 400; color: var(--gold); }
 
 .pdf-frame { background: var(--bg-3); border: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
-.pdf-toolbar { background: var(--bg-2); border-bottom: 1px solid var(--border); padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+.pdf-toolbar {
+  background: var(--bg-2);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
 .pdf-badge { font-family: var(--f-mono); font-size: 10px; background: var(--text-main); color: var(--bg-2); padding: 2px 8px; font-weight: 600; }
 .pdf-filename { font-family: var(--f-mono); font-size: 11px; color: var(--text-dim); margin-left: 10px; }
+
+/* 줌 컨트롤 */
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.zoom-btn {
+  width: 32px; height: 32px;
+  border: 1px solid var(--border);
+  background: var(--bg-3);
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-main);
+  border-radius: 4px;
+  transition: all 0.15s;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.zoom-btn:hover { background: var(--text-main); color: var(--bg-2); border-color: var(--text-main); }
+.zoom-btn:active { transform: scale(0.93); }
+.zoom-level {
+  font-family: var(--f-mono);
+  font-size: 12px;
+  color: var(--text-main);
+  min-width: 44px;
+  text-align: center;
+  font-weight: 700;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 6px;
+}
 
 #pdf-embed {
   width: 100%;
   height: 76vh;
   min-height: 500px;
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: auto;
   background: #d0d0d0;
   padding: 20px 0;
   text-align: center;
   box-sizing: border-box;
 }
 
-/* 캔버스: JS가 실제 px 크기를 지정하고, CSS는 최대 너비만 제한 */
 #pdf-embed canvas {
   display: block;
   margin: 0 auto 16px;
-  max-width: calc(100% - 32px); /* 좌우 여백 확보 */
-  height: auto !important;      /* 비율 유지 */
+  max-width: none;        /* 줌 시 잘리지 않도록 */
+  height: auto !important;
   border: 1px solid #bbb;
   box-shadow: 0 3px 10px rgba(0,0,0,0.2);
   background: #fff;
@@ -362,6 +401,12 @@ code { font-family: var(--f-mono); font-size: 0.85em; background: var(--bg-3); b
         <div class="pdf-frame">
           <div class="pdf-toolbar">
             <div><span class="pdf-badge">PDF</span><span class="pdf-filename" id="viewer-filename">파일명</span></div>
+            <div class="zoom-controls">
+              <button class="zoom-btn" id="zoom-out" title="축소">−</button>
+              <span class="zoom-level" id="zoom-level">100%</span>
+              <button class="zoom-btn" id="zoom-in"  title="확대">+</button>
+              <button class="zoom-btn" id="zoom-fit" title="너비 맞춤" style="width:auto;padding:0 8px;font-size:10px;font-family:var(--f-mono);">맞춤</button>
+            </div>
             <span id="pdf-page-info" style="font-family:var(--f-mono);font-size:10px;color:var(--text-mute);"></span>
           </div>
           <div id="pdf-embed"></div>
@@ -748,20 +793,39 @@ async function renderThumbnails(files) {
         const pdf  = await pdfjsLib.getDocument({ data: buffer, cMapUrl: CMAP_URL, cMapPacked: true }).promise;
         const page = await pdf.getPage(1);
 
-        const thumbW   = canvas.parentElement.clientWidth || 220;
-        const baseVP   = page.getViewport({ scale: 1 });
-        const scale    = thumbW / baseVP.width;
+        // 썸네일 컨테이너 크기 (고정)
+        const thumbEl = canvas.parentElement;
+        const THUMB_W = thumbEl.clientWidth  || 220;
+        const THUMB_H = thumbEl.clientHeight || 240;
+
+        // PDF 페이지를 썸네일 너비 기준으로 렌더 (약간 고화질)
+        const baseVP  = page.getViewport({ scale: 1 });
+        const scale   = (THUMB_W * 1.5) / baseVP.width;
         const viewport = page.getViewport({ scale });
 
-        // 썸네일은 dpr 적용 없이 저해상도로 (성능 우선)
-        canvas.width  = Math.floor(viewport.width);
-        canvas.height = Math.floor(viewport.height);
-        canvas.style.width  = '100%';
-        canvas.style.height = '100%';
-        canvas.style.objectFit = 'cover';
-        canvas.style.objectPosition = 'top center';
+        // ① 오프스크린 캔버스에 전체 페이지 렌더링
+        const offCanvas = document.createElement('canvas');
+        offCanvas.width  = Math.floor(viewport.width);
+        offCanvas.height = Math.floor(viewport.height);
+        await page.render({
+          canvasContext: offCanvas.getContext('2d'),
+          viewport,
+        }).promise;
 
-        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+        // ② 가시 캔버스를 썸네일 크기로 고정 후 상단 크롭
+        canvas.width  = THUMB_W;
+        canvas.height = THUMB_H;
+        canvas.style.width  = THUMB_W + 'px';
+        canvas.style.height = THUMB_H + 'px';
+
+        // 비율 유지하며 상단부터 채우기
+        const srcW = offCanvas.width;
+        const srcH = Math.floor(offCanvas.width * (THUMB_H / THUMB_W));
+        canvas.getContext('2d').drawImage(
+          offCanvas,
+          0, 0, srcW, srcH,   // 소스: 전체 너비 × 상단 일부
+          0, 0, THUMB_W, THUMB_H  // 대상: 썸네일 전체
+        );
 
         if (msgEl) msgEl.style.display = 'none';
         canvas.style.display = 'block';
@@ -913,7 +977,55 @@ function initViewer(filePath) {
           if (num < pdf.numPages) renderPage(num + 1);
         });
       };
-      renderPage(1);
+
+      // ── 줌 기능 ──
+      const baseW = (container.clientWidth || 600) - 32;
+      const firstPageVP = await pdf.getPage(1).then(p => p.getViewport({ scale: 1 }));
+      const fitScale = baseW / firstPageVP.width;
+
+      let currentZoom = 1.0;
+      const ZOOM_STEPS = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0];
+
+      async function reRender(zoom) {
+        currentZoom = zoom;
+        document.getElementById('zoom-level').textContent = Math.round(zoom * 100) + '%';
+        container.innerHTML = '';
+
+        // dpr은 최소 2 보장 → 핀치줌 2배까지 선명
+        const dpr = Math.max(window.devicePixelRatio || 1, 2);
+        const renderScale = fitScale * zoom;
+
+        for (let num = 1; num <= pdf.numPages; num++) {
+          const page     = await pdf.getPage(num);
+          const viewport = page.getViewport({ scale: renderScale });
+          const canvas   = document.createElement('canvas');
+          const ctx      = canvas.getContext('2d');
+
+          canvas.width  = Math.floor(viewport.width  * dpr);
+          canvas.height = Math.floor(viewport.height * dpr);
+          canvas.style.width  = Math.floor(viewport.width)  + 'px';
+          canvas.style.height = Math.floor(viewport.height) + 'px';
+
+          ctx.scale(dpr, dpr);
+          container.appendChild(canvas);
+          await page.render({ canvasContext: ctx, viewport }).promise;
+        }
+        dbg('ok', `줌 ${Math.round(zoom*100)}% 렌더 완료`);
+      }
+
+      // 줌 버튼 이벤트
+      document.getElementById('zoom-in').onclick = () => {
+        const next = ZOOM_STEPS.find(s => s > currentZoom) || ZOOM_STEPS[ZOOM_STEPS.length - 1];
+        reRender(next);
+      };
+      document.getElementById('zoom-out').onclick = () => {
+        const prev = [...ZOOM_STEPS].reverse().find(s => s < currentZoom) || ZOOM_STEPS[0];
+        reRender(prev);
+      };
+      document.getElementById('zoom-fit').onclick = () => reRender(1.0);
+
+      // 초기 렌더: 1.5배 배율로 시작 (핀치줌 50%까지 선명하게 유지)
+      reRender(1.5);
 
     } catch(err) {
       const reason = err.message === 'LFS_POINTER'
