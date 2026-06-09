@@ -37,6 +37,45 @@ code { font-family: var(--f-mono); font-size: 0.85em; background: var(--bg-3); b
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 4px; }
 
+/* ── 진단 패널 ── */
+#debug-panel {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 9999;
+  background: #1a1a1a; color: #f0f0f0;
+  font-family: var(--f-mono); font-size: 12px;
+  border-top: 3px solid #e67e22;
+  max-height: 50vh; overflow-y: auto;
+}
+#debug-panel.hidden { display: none; }
+.dbg-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px; background: #111; position: sticky; top: 0;
+  border-bottom: 1px solid #333;
+}
+.dbg-title { color: #e67e22; font-weight: 700; font-size: 13px; letter-spacing: 0.05em; }
+.dbg-close {
+  background: #c0392b; color: #fff; border: none;
+  padding: 4px 10px; font-size: 11px; cursor: pointer; border-radius: 2px;
+}
+.dbg-body { padding: 12px 16px; display: flex; flex-direction: column; gap: 6px; }
+.dbg-row {
+  display: flex; gap: 10px; align-items: flex-start;
+  padding: 6px 10px; border-radius: 3px; line-height: 1.5;
+}
+.dbg-row.ok   { background: rgba(39,174,96,0.15);  border-left: 3px solid #27ae60; }
+.dbg-row.err  { background: rgba(192,57,43,0.15);  border-left: 3px solid #c0392b; }
+.dbg-row.warn { background: rgba(230,126,34,0.15); border-left: 3px solid #e67e22; }
+.dbg-row.info { background: rgba(52,152,219,0.15); border-left: 3px solid #3498db; }
+.dbg-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+.dbg-msg { flex: 1; word-break: break-all; color: #ddd; }
+.dbg-msg strong { color: #fff; display: block; margin-bottom: 2px; }
+.dbg-msg small  { color: #999; font-size: 11px; }
+.dbg-fix {
+  display: inline-block; margin-top: 6px;
+  background: #e67e22; color: #fff;
+  padding: 3px 10px; border-radius: 2px; font-size: 11px; cursor: pointer;
+}
+.dbg-fix:hover { background: #d35400; }
+
 /* ═══════════════════════════════════════════════════════════════
    HEADER 
 ═══════════════════════════════════════════════════════════════ */
@@ -338,6 +377,17 @@ code { font-family: var(--f-mono); font-size: 0.85em; background: var(--bg-3); b
   </div>
 </footer>
 
+<!-- ── 진단 패널 (문제 해결 후 삭제 가능) ── -->
+<div id="debug-panel">
+  <div class="dbg-header">
+    <span class="dbg-title">🔍 진단 패널 — 로딩 상태</span>
+    <button class="dbg-close" onclick="document.getElementById('debug-panel').classList.add('hidden')">닫기</button>
+  </div>
+  <div class="dbg-body" id="dbg-body">
+    <div class="dbg-row info"><span class="dbg-icon">⏳</span><div class="dbg-msg"><strong>진단 시작 중…</strong></div></div>
+  </div>
+</div>
+
 <script>
 /* ────────────────────────────────────────────────────────────
    ★ CONFIG (설정값) ★
@@ -350,6 +400,30 @@ const CONFIG = {
   token:     '', 
   cacheTTL:  5 * 60 * 1000,
 };
+
+/* ── 진단 로그 함수 ── */
+function dbg(type, title, detail = '', fixLabel = '', fixFn = null) {
+  const body = document.getElementById('dbg-body');
+  if (!body) return;
+  const icons = { ok:'✅', err:'❌', warn:'⚠️', info:'ℹ️' };
+  const row = document.createElement('div');
+  row.className = `dbg-row ${type}`;
+  row.innerHTML = `
+    <span class="dbg-icon">${icons[type] || '▪'}</span>
+    <div class="dbg-msg">
+      <strong>${title}</strong>
+      ${detail ? `<small>${detail}</small>` : ''}
+      ${fixLabel ? `<span class="dbg-fix" id="dbg-fix-${Date.now()}">${fixLabel}</span>` : ''}
+    </div>`;
+  if (fixLabel && fixFn) {
+    row.querySelector('.dbg-fix').addEventListener('click', fixFn);
+  }
+  // 첫 번째 "진단 시작 중" 메시지 제거
+  const first = body.querySelector('.dbg-row.info');
+  if (first && first.textContent.includes('진단 시작 중')) first.remove();
+  body.appendChild(row);
+  body.scrollTop = body.scrollHeight;
+}
 
 const GISCUS = {
   repo:       'kimyunho0918-creator/News_site',
@@ -376,11 +450,33 @@ class RateLimitError extends Error { constructor(m){ super(m); this.name='RateLi
 class ApiError extends Error { constructor(m,s){ super(m); this.name='ApiError'; this.status=s; } }
 
 async function apiFetch(url) {
+  dbg('info', 'GitHub API 호출 중…', url.replace('https://api.github.com',''));
   const headers = { 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' };
   if (CONFIG.token) headers['Authorization'] = `Bearer ${CONFIG.token}`;
   const res = await fetch(url, { headers });
-  if (res.status === 403 || res.status === 429) throw new RateLimitError(`API 호출 한도 초과.`);
-  if (!res.ok) throw new ApiError(`API 오류: ${res.status}`, res.status);
+
+  const remaining = res.headers.get('X-RateLimit-Remaining');
+  const resetTs   = res.headers.get('X-RateLimit-Reset');
+  const resetTime = resetTs ? new Date(parseInt(resetTs)*1000).toLocaleTimeString('ko-KR') : '?';
+
+  if (res.status === 403 || res.status === 429) {
+    dbg('err', 'API 호출 한도 초과 (Rate Limit)',
+      `남은 횟수: ${remaining ?? '?'} / 초기화 시각: ${resetTime}`,
+      '해결 방법 보기',
+      () => alert('GitHub Personal Access Token을 발급받아 CONFIG.token에 입력하세요.\n\nGitHub → Settings → Developer settings → Fine-grained tokens → Contents: Read-only')
+    );
+    throw new RateLimitError(`API 호출 한도 초과. ${resetTime}에 초기화됩니다.`);
+  }
+  if (!res.ok) {
+    dbg('err', `API 오류: HTTP ${res.status}`,
+      res.status === 404
+        ? `pdfs 폴더를 찾을 수 없습니다. owner/repo/pdfFolder 설정을 확인하세요.`
+        : `서버 응답: ${res.statusText}`
+    );
+    throw new ApiError(`API 오류: ${res.status}`, res.status);
+  }
+
+  dbg('ok', `API 응답 성공`, `남은 호출 횟수: ${remaining ?? '?'}회`);
   return res.json();
 }
 
@@ -453,28 +549,49 @@ async function initList() {
   const container = document.getElementById('pdf-list-container');
   container.innerHTML = `<div class="state-box"><div class="spin-ring"></div><h3>목록 불러오는 중…</h3></div>`;
 
+  dbg('info', '목록 로딩 시작', `레포: ${CONFIG.owner}/${CONFIG.repo} / 폴더: ${CONFIG.pdfFolder}`);
+
   try {
     const cacheKey = `list_${CONFIG.owner}_${CONFIG.repo}`;
+
+    // 혹시 깨진 캐시가 있으면 자동 제거
+    const cached = Cache.get(cacheKey);
+    if (cached && cached.length > 0 && cached[0].year === undefined) {
+      dbg('warn', '깨진 캐시 감지 → 자동 삭제', '이전 버전 코드가 저장한 year/month 없는 데이터');
+      Cache.clear(cacheKey);
+    }
+
     let files = Cache.get(cacheKey);
 
-    if (!files) {
+    if (files) {
+      dbg('ok', `캐시에서 불러옴 (${files.length}개)`, '새로고침하려면 수동 갱신 버튼을 누르세요.');
+    } else {
       const raw = await apiFetch(contUrl(CONFIG.pdfFolder));
 
-      if (!Array.isArray(raw)) throw new ApiError('pdfs 폴더를 찾을 수 없습니다.', 404);
+      if (!Array.isArray(raw)) {
+        dbg('err', 'pdfs 폴더 응답이 배열이 아님', `응답 타입: ${typeof raw}`);
+        throw new ApiError('pdfs 폴더를 찾을 수 없습니다.', 404);
+      }
 
-      files = raw
-        .filter(f => f.type === 'file' && /\.pdf$/i.test(f.name))
+      dbg('info', `폴더 내 항목 ${raw.length}개 발견`, '이제 PDF 파일만 필터링합니다.');
+
+      const allPdfs = raw.filter(f => f.type === 'file' && /\.pdf$/i.test(f.name));
+      dbg('info', `PDF 파일 ${allPdfs.length}개 확인`,
+        allPdfs.length > 0 ? allPdfs.map(f => f.name).join(', ') : '파일 없음');
+
+      files = allPdfs
         .map(f => {
           const info = parseFileName(f.name);
-          /*
-           * ★★★ 핵심 버그 수정 ★★★
-           * 원본: { name, path }          → year/month/day/sortKey 가 undefined
-           * 수정: { name, path, ...info } → 날짜 정보를 함께 포함
-           */
+          if (!info) {
+            dbg('warn', `파일명 형식 불일치: ${f.name}`, 'YY_MM_DD.pdf 형식이 아닌 파일은 무시됩니다.');
+          }
           return info ? { name: f.name, path: f.path, ...info } : null;
         })
         .filter(Boolean)
-        .sort((a, b) => b.sortKey.localeCompare(a.sortKey)); // 최신순
+        .sort((a, b) => b.sortKey.localeCompare(a.sortKey));
+
+      dbg('ok', `파싱 완료: ${files.length}개 신문 인식됨`,
+        files.length > 0 ? files.map(f => f.label).join(' / ') : '—');
 
       Cache.set(cacheKey, files);
     }
@@ -484,19 +601,26 @@ async function initList() {
     renderCategories();
 
     if (files.length === 0) {
+      dbg('warn', '표시할 파일이 없습니다',
+        `pdfs/ 폴더에 YY_MM_DD.pdf 형식 파일을 업로드해 주세요.`);
       container.innerHTML = `<div class="state-box">
         <h3>업로드된 신문이 없습니다</h3>
         <p><code>pdfs/</code> 폴더에 <code>YY_MM_DD.pdf</code> 형식으로 파일을 올려주세요.</p>
       </div>`;
     } else {
+      dbg('ok', `목록 렌더링 완료 ✓`, `${files.length}개 신문이 화면에 표시됩니다.`);
       filterList('all');
     }
 
   } catch(err) {
     console.error('[initList]', err);
+    if (!err.message.includes('API')) {
+      dbg('err', `예상치 못한 오류: ${err.name}`, err.message);
+    }
     container.innerHTML = `<div class="state-box">
       <h3>목록을 불러올 수 없습니다</h3>
       <p>${err.message}</p>
+      <p style="margin-top:8px;"><button class="btn" onclick="refreshList()">🔄 다시 시도</button></p>
     </div>`;
   }
 }
@@ -736,6 +860,10 @@ function loadGiscus(term) {
 document.addEventListener('DOMContentLoaded', () => {
   const dateStr = new Date().toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric' });
   document.getElementById('current-date').textContent = dateStr;
+
+  dbg('info', '페이지 초기화', `접속 시각: ${dateStr}`);
+  dbg('info', `설정 확인: ${CONFIG.owner}/${CONFIG.repo}`,
+    `폴더: ${CONFIG.pdfFolder} / 토큰: ${CONFIG.token ? '설정됨' : '없음 (시간당 60회 제한)'}`);
 
   const { view, file } = parseHash();
   if (view === 'viewer' && file) initList().then(() => _applyView('viewer', file));
