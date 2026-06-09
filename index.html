@@ -210,12 +210,33 @@ code { font-family: var(--f-mono); font-size: 0.85em; background: var(--bg-3); b
 .viewer-title { font-family: var(--f-display); font-size: clamp(24px, 3.5vw, 36px); font-weight: 700; line-height: 1.2; color: var(--text-main); margin: 0; }
 .viewer-title em { font-style: normal; font-weight: 400; color: var(--gold); }
 
-.pdf-frame { background: var(--bg-3); border: 1px solid var(--border); display: flex; flex-direction: column; }
-.pdf-toolbar { background: var(--bg-2); border-bottom: 1px solid var(--border); padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; }
+.pdf-frame { background: var(--bg-3); border: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+.pdf-toolbar { background: var(--bg-2); border-bottom: 1px solid var(--border); padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
 .pdf-badge { font-family: var(--f-mono); font-size: 10px; background: var(--text-main); color: var(--bg-2); padding: 2px 8px; font-weight: 600; }
 .pdf-filename { font-family: var(--f-mono); font-size: 11px; color: var(--text-dim); margin-left: 10px; }
-#pdf-embed { width: 100%; height: 76vh; min-height: 500px; overflow-y: auto; overflow-x: hidden; padding: 24px 0; text-align: center; }
-#pdf-embed canvas { max-width: 90%; margin: 0 auto 24px auto; display: block; border: 1px solid var(--border-2); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+#pdf-embed {
+  width: 100%;
+  height: 76vh;
+  min-height: 500px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: #d0d0d0;
+  padding: 20px 0;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+/* 캔버스: JS가 실제 px 크기를 지정하고, CSS는 최대 너비만 제한 */
+#pdf-embed canvas {
+  display: block;
+  margin: 0 auto 16px;
+  max-width: calc(100% - 32px); /* 좌우 여백 확보 */
+  height: auto !important;      /* 비율 유지 */
+  border: 1px solid #bbb;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+  background: #fff;
+}
 
 .sidebar { position: sticky; top: 80px; display: flex; flex-direction: column; gap: 20px; }
 .panel { background: var(--bg-2); border: 1px solid var(--border); }
@@ -732,8 +753,14 @@ async function renderThumbnails(files) {
         const scale    = thumbW / baseVP.width;
         const viewport = page.getViewport({ scale });
 
-        canvas.width  = viewport.width;
-        canvas.height = viewport.height;
+        // 썸네일은 dpr 적용 없이 저해상도로 (성능 우선)
+        canvas.width  = Math.floor(viewport.width);
+        canvas.height = Math.floor(viewport.height);
+        canvas.style.width  = '100%';
+        canvas.style.height = '100%';
+        canvas.style.objectFit = 'cover';
+        canvas.style.objectPosition = 'top center';
+
         await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
 
         if (msgEl) msgEl.style.display = 'none';
@@ -855,15 +882,34 @@ function initViewer(filePath) {
 
       const renderPage = num => {
         pdf.getPage(num).then(page => {
-          const maxW     = container.clientWidth * 0.9 || 600;
-          const baseVP   = page.getViewport({ scale: 1 });
-          const scale    = Math.min(1.8, maxW / baseVP.width);
+          // 컨테이너 실제 너비 측정 (패딩 제외)
+          const containerW = container.clientWidth || 600;
+          const availableW = containerW - 32; // 좌우 16px 여백
+
+          // 기본 viewport (scale=1) 로 PDF 원본 크기 파악
+          const baseVP = page.getViewport({ scale: 1 });
+
+          // 컨테이너 너비에 딱 맞는 스케일 계산
+          const scale   = availableW / baseVP.width;
           const viewport = page.getViewport({ scale });
-          const canvas   = document.createElement('canvas');
-          canvas.width   = viewport.width;
-          canvas.height  = viewport.height;
+
+          // 고해상도(Retina/모바일) 대응: devicePixelRatio 적용
+          const dpr = window.devicePixelRatio || 1;
+          const canvas = document.createElement('canvas');
+          const ctx    = canvas.getContext('2d');
+
+          // 실제 픽셀 크기 = 논리 크기 × dpr (선명하게)
+          canvas.width  = Math.floor(viewport.width  * dpr);
+          canvas.height = Math.floor(viewport.height * dpr);
+
+          // CSS 크기는 논리 크기로 (화면에서 보이는 크기)
+          canvas.style.width  = Math.floor(viewport.width)  + 'px';
+          canvas.style.height = Math.floor(viewport.height) + 'px';
+
+          ctx.scale(dpr, dpr);
           container.appendChild(canvas);
-          page.render({ canvasContext: canvas.getContext('2d'), viewport });
+          page.render({ canvasContext: ctx, viewport });
+
           if (num < pdf.numPages) renderPage(num + 1);
         });
       };
