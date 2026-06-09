@@ -44,9 +44,21 @@ code { font-family: var(--f-mono); font-size: 0.85em; background: var(--bg-3); b
 .masthead::before { content: ''; display: block; height: 3px; background: var(--text-main); }
 .masthead__inner { max-width: var(--max-w); margin: 0 auto; padding: 32px 40px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 24px; }
 .masthead__brand { display: flex; align-items: center; justify-content: center; gap: 20px; }
-.logo-container { width: 80px; height: 80px; border: 1px solid var(--border); background: var(--bg); display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 4px; flex-shrink: 0; }
-.logo-placeholder { font-size: 10px; color: var(--text-mute); font-family: var(--f-body); }
-.logo-container img { max-width: 100%; max-height: 100%; object-fit: contain; display: none; }
+
+/* ── [수정 1] 로고 플레이스홀더: 빈 img 제거, 텍스트 박스만 표시 ── */
+.logo-placeholder-box {
+  width: 80px; height: 80px;
+  border: 2px dashed var(--border-2);
+  background: var(--bg-3);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 4px;
+  border-radius: 4px; flex-shrink: 0;
+  color: var(--text-mute);
+}
+.logo-placeholder-box span:first-child { font-size: 22px; }
+.logo-placeholder-box span:last-child  { font-family: var(--f-mono); font-size: 8px; letter-spacing: 0.05em; text-transform: uppercase; }
+
 .title-group { text-align: left; }
 .masthead__title { font-family: var(--f-display); font-size: clamp(28px, 4vw, 52px); font-weight: 700; letter-spacing: 0.02em; line-height: 1.1; color: var(--text-main); white-space: nowrap; }
 .masthead__title strong { color: var(--gold); }
@@ -79,7 +91,7 @@ code { font-family: var(--f-mono); font-size: 0.85em; background: var(--bg-3); b
 .sec-label { font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; background: var(--text-main); color: var(--bg-2); padding: 4px 10px; }
 .sec-title { font-family: var(--f-display); font-size: 24px; font-weight: 700; color: var(--text-main); margin: 0; }
 
-.btn { font-family: var(--f-mono); font-size: 10px; text-transform: uppercase; font-weight: 500; padding: 6px 12px; border: 1px solid var(--border-2); color: var(--text-dim); border-radius: 2px; background: var(--bg-2); transition: 0.2s; }
+.btn { font-family: var(--f-mono); font-size: 10px; text-transform: uppercase; font-weight: 500; padding: 6px 12px; border: 1px solid var(--border-2); color: var(--text-dim); border-radius: 2px; background: var(--bg-2); transition: 0.2s; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
 .btn:hover { border-color: var(--text-main); color: var(--text-main); background: var(--bg-3); }
 
 .stats-row { display: flex; border: 1px solid var(--border); margin-bottom: 32px; background: var(--bg-2); }
@@ -90,23 +102,56 @@ code { font-family: var(--f-mono); font-size: 0.85em; background: var(--bg-3); b
 
 .list-layout { display: grid; grid-template-columns: 220px 1fr; gap: 32px; align-items: start; }
 @media (max-width: 860px) { .list-layout { grid-template-columns: 1fr; } }
-.category-sidebar { background: var(--bg-2); border: 1px solid var(--border); padding: 20px; position: sticky; top: 80px; }
+.category-sidebar { background: var(--bg-2); border: 1px solid var(--border); padding: 20px; position: sticky; top: 60px; }
 .cat-title { font-family: var(--f-mono); font-size: 11px; font-weight: 600; text-transform: uppercase; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
 .cat-year { font-family: var(--f-display); font-size: 18px; font-weight: 700; margin: 16px 0 8px 0; }
-.cat-month { display: block; width: 100%; text-align: left; padding: 6px 12px; font-size: 14px; color: var(--text-dim); border-left: 3px solid transparent; }
+.cat-month { display: block; width: 100%; text-align: left; padding: 6px 12px; font-size: 14px; color: var(--text-dim); border-left: 3px solid transparent; cursor: pointer; }
 .cat-month:hover, .cat-month.active { color: var(--text-main); background: var(--bg-3); }
 .cat-month.active { border-left-color: var(--gold); font-weight: 700; }
-.cat-all { font-family: var(--f-body); font-size: 15px; color: var(--text-dim); padding: 8px 12px; border-bottom: 1px dashed var(--border); margin-bottom: 8px; width: 100%; text-align: left; }
+.cat-all { font-family: var(--f-body); font-size: 15px; color: var(--text-dim); padding: 8px 12px; border-bottom: 1px dashed var(--border); margin-bottom: 8px; width: 100%; text-align: left; cursor: pointer; }
 .cat-all:hover, .cat-all.active { color: var(--text-main); font-weight: 700; }
 
-/* 미리보기(썸네일) PDF CARDS */
+/* ── [수정 2] 썸네일 카드: canvas 표시 올바르게 ── */
 .pdf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 24px; }
 .pdf-card { background: var(--bg-2); border: 1px solid var(--border); cursor: pointer; display: flex; flex-direction: column; transition: all 0.2s ease; overflow: hidden; }
 .pdf-card:hover { transform: translateY(-4px); border-color: var(--text-main); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
-.card-thumb { height: 240px; background: var(--bg-3); border-bottom: 1px solid var(--border); position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-.card-thumb::before { content: '미리보기 로딩중...'; position: absolute; font-family: var(--f-mono); font-size: 11px; color: var(--text-mute); z-index: 0; }
-.card-thumb canvas { position: relative; width: 100%; height: 100%; object-fit: cover; object-position: top center; z-index: 1; transition: transform 0.3s ease; }
+
+.card-thumb {
+  height: 240px;
+  background: var(--bg-3);
+  border-bottom: 1px solid var(--border);
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+/* 로딩 중 텍스트 */
+.card-thumb__msg {
+  position: absolute;
+  font-family: var(--f-mono); font-size: 11px; color: var(--text-mute);
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  z-index: 0;
+}
+.mini-spin {
+  width: 20px; height: 20px;
+  border: 2px solid var(--border);
+  border-top-color: var(--text-mute);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+/* 캔버스: 썸네일 비율로 맞추기 */
+.card-thumb canvas {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  z-index: 1;
+  display: none; /* JS에서 렌더 완료 후 표시 */
+  transition: transform 0.3s ease;
+}
 .pdf-card:hover .card-thumb canvas { transform: scale(1.03); }
+
 .card-top { padding: 16px; flex: 1; }
 .card-issue { font-family: var(--f-mono); font-size: 10px; color: var(--gold); margin-bottom: 4px; }
 .card-date { font-family: var(--f-display); font-size: 22px; font-weight: 700; color: var(--text-main); }
@@ -144,12 +189,13 @@ code { font-family: var(--f-mono); font-size: 0.85em; background: var(--bg-3); b
 .info-table td { padding: 8px 0; font-size: 13px; color: var(--text-main); }
 .info-table td:first-child { font-family: var(--f-mono); font-size: 11px; color: var(--text-mute); width: 60px; }
 .issue-nav { display: flex; gap: 8px; margin-bottom: 8px; }
-.issue-nav-btn { flex: 1; padding: 8px; border: 1px solid var(--border); background: var(--bg-3); font-size: 12px; }
+.issue-nav-btn { flex: 1; padding: 8px; border: 1px solid var(--border); background: var(--bg-3); font-size: 12px; cursor: pointer; }
 .issue-nav-btn:hover:not(:disabled) { border-color: var(--text-main); color: var(--text-main); background: var(--bg-2); }
 .issue-nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
 .state-box { padding: 60px 20px; text-align: center; background: var(--bg-2); border: 1px solid var(--border); }
 .state-box h3 { font-family: var(--f-display); font-size: 20px; font-weight: 700; color: var(--text-main); margin-bottom: 8px; }
+.state-box p { font-family: var(--f-mono); font-size: 12px; color: var(--text-mute); margin-top: 8px; line-height: 1.8; }
 .spin-ring { width: 36px; height: 36px; margin: 0 auto 20px; border: 3px solid var(--border); border-top-color: var(--text-main); border-radius: 50%; animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -178,10 +224,12 @@ code { font-family: var(--f-mono); font-size: 0.85em; background: var(--bg-3); b
 <header class="masthead">
   <div class="masthead__inner">
     <div class="masthead__meta">신문편집부 × 컴퓨터 동아리<br/>공동 편집 시스템 v1.0</div>
+
     <div class="masthead__brand">
-      <div class="logo-container">
-        <img src="" alt="동아리 로고" />
-        <span class="logo-placeholder">로고 이미지</span>
+      <!-- [수정 1] 빈 src="" img 제거 → 로고 플레이스홀더 박스로 교체 -->
+      <div class="logo-placeholder-box">
+        <span>📰</span>
+        <span>로고 준비중</span>
       </div>
       <div class="title-group">
         <h1 class="masthead__title">The <strong>School</strong> Press</h1>
@@ -189,9 +237,13 @@ code { font-family: var(--f-mono); font-size: 0.85em; background: var(--bg-3); b
         <p class="masthead__sub">신문편집부 &nbsp;×&nbsp; 컴퓨터 동아리</p>
       </div>
     </div>
+
     <div class="masthead__right">
       <div id="current-date">날짜 로딩 중…</div>
-      <div class="toolbox-list"><span>✓ 최신호 자동 갱신</span><span>✓ PDF 미리보기 생성</span></div>
+      <div class="toolbox-list">
+        <span>✓ 최신호 자동 갱신</span>
+        <span>✓ PDF 미리보기 생성</span>
+      </div>
     </div>
   </div>
 </header>
@@ -213,7 +265,10 @@ code { font-family: var(--f-mono); font-size: 0.85em; background: var(--bg-3); b
     </div>
     <div class="sec-header">
       <div class="sec-header__left"><span class="sec-label">Archive</span><h2 class="sec-title">발행 신문 목록</h2></div>
-      <span class="sec-count"><span id="list-count" style="margin-right: 8px;"></span><button class="btn" onclick="refreshList()">🔄 수동 갱신</button></span>
+      <span class="sec-count">
+        <span id="list-count" style="margin-right: 8px; font-family:var(--f-mono); font-size:11px; color:var(--text-mute);"></span>
+        <button class="btn" onclick="refreshList()">🔄 수동 갱신</button>
+      </span>
     </div>
     <div class="list-layout">
       <aside class="category-sidebar">
@@ -227,10 +282,16 @@ code { font-family: var(--f-mono); font-size: 0.85em; background: var(--bg-3); b
   </div>
 
   <div class="view" id="view-viewer">
-    <nav class="breadcrumb"><a href="#" onclick="showView('list');return false;">홈</a><span class="breadcrumb__sep">›</span><a href="#" onclick="showView('list');return false;">발행 목록</a><span class="breadcrumb__sep">›</span><span id="breadcrumb-file">열람 중…</span></nav>
+    <nav class="breadcrumb">
+      <a href="#" onclick="showView('list');return false;">홈</a>
+      <span class="breadcrumb__sep">›</span>
+      <a href="#" onclick="showView('list');return false;">발행 목록</a>
+      <span class="breadcrumb__sep">›</span>
+      <span id="breadcrumb-file">열람 중…</span>
+    </nav>
     <div class="viewer-header">
       <div><h2 class="viewer-title" id="viewer-title">신문 열람 중…</h2></div>
-      <div class="viewer-actions">
+      <div class="viewer-actions" style="display:flex;gap:8px;flex-wrap:wrap;">
         <a id="btn-newtab" href="#" target="_blank" rel="noopener" class="btn">↗ 새 탭</a>
         <a id="btn-download" href="#" download class="btn">↓ 다운로드</a>
         <button class="btn" onclick="showView('list')">← 목록</button>
@@ -239,13 +300,16 @@ code { font-family: var(--f-mono); font-size: 0.85em; background: var(--bg-3); b
     <div class="viewer-layout">
       <div>
         <div class="pdf-frame">
-          <div class="pdf-toolbar"><div><span class="pdf-badge">PDF</span><span class="pdf-filename" id="viewer-filename">파일명</span></div></div>
+          <div class="pdf-toolbar">
+            <div><span class="pdf-badge">PDF</span><span class="pdf-filename" id="viewer-filename">파일명</span></div>
+            <span id="pdf-page-info" style="font-family:var(--f-mono);font-size:10px;color:var(--text-mute);"></span>
+          </div>
           <div id="pdf-embed"></div>
         </div>
         <section class="discussion-section" id="discussion">
           <div class="discussion-header">
             <h3 class="discussion-title">회의 보드 <span class="discussion-badge">Live</span></h3>
-            <p class="discussion-sub">GitHub 계정으로 로그인 후 피드백을 남겨주세요</p>
+            <p class="discussion-sub" style="font-family:var(--f-mono);font-size:11px;color:var(--text-mute);">GitHub 계정으로 로그인 후 피드백을 남겨주세요</p>
           </div>
           <div class="giscus-wrap"><div id="giscus-container"></div></div>
         </section>
@@ -259,7 +323,7 @@ code { font-family: var(--f-mono); font-size: 0.85em; background: var(--bg-3); b
           <div class="panel__head"><div class="panel__head-dot"></div><span class="panel__title">다른 호 보기</span></div>
           <div class="panel__body">
             <div class="issue-nav"><button class="issue-nav-btn" id="btn-prev" disabled>← 이전</button><button class="issue-nav-btn" id="btn-next" disabled>다음 →</button></div>
-            <button class="btn btn-full" onclick="document.getElementById('discussion').scrollIntoView({behavior:'smooth'})">💬 회의 보드로 이동</button>
+            <button class="btn" style="width:100%;justify-content:center;margin-top:6px;" onclick="document.getElementById('discussion').scrollIntoView({behavior:'smooth'})">💬 회의 보드로 이동</button>
           </div>
         </div>
       </aside>
@@ -288,10 +352,10 @@ const CONFIG = {
 };
 
 const GISCUS = {
-  repo:       'YOUR_GITHUB_USERNAME/YOUR_REPO_NAME',
-  repoId:     'YOUR_REPO_ID',                        
+  repo:       'kimyunho0918-creator/News_site',
+  repoId:     'YOUR_REPO_ID',        // ← giscus.app 에서 발급
   category:   '회의록',
-  categoryId: 'YOUR_CATEGORY_ID',                    
+  categoryId: 'YOUR_CATEGORY_ID',   // ← giscus.app 에서 발급
   theme:      'light',
   lang:       'ko',
 };
@@ -299,9 +363,14 @@ const GISCUS = {
 const CMAP_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/';
 
 /* ────────────────────────────────────────────────────────────
-   UTILITIES & 로직
+   UTILITIES
 ──────────────────────────────────────────────────────────── */
-const contUrl = path => `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${path}`;
+const contUrl = path =>
+  `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${path}`;
+
+/* PDF 절대 경로 (GitHub Pages URL) */
+const pdfUrl = filePath =>
+  `https://${CONFIG.owner}.github.io/${CONFIG.repo}/${filePath}`;
 
 class RateLimitError extends Error { constructor(m){ super(m); this.name='RateLimitError'; } }
 class ApiError extends Error { constructor(m,s){ super(m); this.name='ApiError'; this.status=s; } }
@@ -317,7 +386,14 @@ async function apiFetch(url) {
 
 const Cache = {
   _k: k => `np_${k}`,
-  get(k) { try { const r = sessionStorage.getItem(this._k(k)); if (!r) return null; const { data, ts } = JSON.parse(r); return (Date.now() - ts > CONFIG.cacheTTL) ? null : data; } catch { return null; } },
+  get(k) {
+    try {
+      const r = sessionStorage.getItem(this._k(k));
+      if (!r) return null;
+      const { data, ts } = JSON.parse(r);
+      return (Date.now() - ts > CONFIG.cacheTTL) ? null : data;
+    } catch { return null; }
+  },
   set(k, d) { try { sessionStorage.setItem(this._k(k), JSON.stringify({ data: d, ts: Date.now() })); } catch {} },
   clear(k) { sessionStorage.removeItem(this._k(k)); }
 };
@@ -326,7 +402,13 @@ function parseFileName(filename) {
   const m = filename.match(/^(\d{2})_(\d{2})_(\d{2})(?:_.*)?\.pdf$/i);
   if (!m) return null;
   const year = 2000 + parseInt(m[1]), month = parseInt(m[2]), day = parseInt(m[3]);
-  return { year, month, day, label: `${year}년 ${month}월 ${day}일`, sortKey: `${year}${m[2]}${m[3]}` };
+  const date = new Date(year, month - 1, day);
+  if (isNaN(date.getTime())) return null;
+  return {
+    year, month, day,
+    label:   `${year}년 ${month}월 ${day}일`,
+    sortKey: `${year}${m[2]}${m[3]}`,
+  };
 }
 
 let APP = { files: [], currentFile: null, currentView: 'list', activeFilter: 'all' };
@@ -364,6 +446,9 @@ function refreshList() {
   initList();
 }
 
+/* ────────────────────────────────────────────────────────────
+   LIST
+──────────────────────────────────────────────────────────── */
 async function initList() {
   const container = document.getElementById('pdf-list-container');
   container.innerHTML = `<div class="state-box"><div class="spin-ring"></div><h3>목록 불러오는 중…</h3></div>`;
@@ -371,25 +456,48 @@ async function initList() {
   try {
     const cacheKey = `list_${CONFIG.owner}_${CONFIG.repo}`;
     let files = Cache.get(cacheKey);
-    let fromCache = true;
 
     if (!files) {
-      fromCache = false;
       const raw = await apiFetch(contUrl(CONFIG.pdfFolder));
-      files = raw.filter(f => f.type === 'file' && /\.pdf$/i.test(f.name))
-                 .map(f => { const info = parseFileName(f.name); return info ? { name: f.name, path: f.path } : null; })
-                 .filter(Boolean)
-                 .sort((a,b) => b.sortKey.localeCompare(a.sortKey));
+
+      if (!Array.isArray(raw)) throw new ApiError('pdfs 폴더를 찾을 수 없습니다.', 404);
+
+      files = raw
+        .filter(f => f.type === 'file' && /\.pdf$/i.test(f.name))
+        .map(f => {
+          const info = parseFileName(f.name);
+          /*
+           * ★★★ 핵심 버그 수정 ★★★
+           * 원본: { name, path }          → year/month/day/sortKey 가 undefined
+           * 수정: { name, path, ...info } → 날짜 정보를 함께 포함
+           */
+          return info ? { name: f.name, path: f.path, ...info } : null;
+        })
+        .filter(Boolean)
+        .sort((a, b) => b.sortKey.localeCompare(a.sortKey)); // 최신순
+
       Cache.set(cacheKey, files);
     }
+
     APP.files = files;
-    updateStats(files, fromCache);
+    updateStats(files);
     renderCategories();
 
-    if (files.length === 0) container.innerHTML = `<div class="state-box"><h3>업로드된 신문이 없습니다</h3></div>`;
-    else filterList('all');
+    if (files.length === 0) {
+      container.innerHTML = `<div class="state-box">
+        <h3>업로드된 신문이 없습니다</h3>
+        <p><code>pdfs/</code> 폴더에 <code>YY_MM_DD.pdf</code> 형식으로 파일을 올려주세요.</p>
+      </div>`;
+    } else {
+      filterList('all');
+    }
+
   } catch(err) {
-    container.innerHTML = `<div class="state-box"><h3>API 오류 발생</h3><p>${err.message}</p></div>`;
+    console.error('[initList]', err);
+    container.innerHTML = `<div class="state-box">
+      <h3>목록을 불러올 수 없습니다</h3>
+      <p>${err.message}</p>
+    </div>`;
   }
 }
 
@@ -406,7 +514,7 @@ function renderCategories() {
     html += `<div class="cat-year">${year}년</div>`;
     [...grouped[year]].sort((a,b) => b - a).forEach(month => {
       const filterKey = `${year}-${month}`;
-      const isActive = APP.activeFilter === filterKey ? 'active' : '';
+      const isActive  = APP.activeFilter === filterKey ? 'active' : '';
       html += `<button class="cat-month ${isActive}" onclick="filterList('${filterKey}')">${month}월호</button>`;
     });
   });
@@ -416,135 +524,219 @@ function renderCategories() {
 window.filterList = function(filterKey) {
   APP.activeFilter = filterKey;
   renderCategories();
-  const filtered = filterKey === 'all' ? APP.files : APP.files.filter(f => `${f.year}-${f.month}` === filterKey);
+  const filtered = filterKey === 'all'
+    ? APP.files
+    : APP.files.filter(f => `${f.year}-${f.month}` === filterKey);
   renderGrid(document.getElementById('pdf-list-container'), filtered);
-}
+};
 
 function renderGrid(container, files) {
   document.getElementById('list-count').textContent = `검색 결과: ${files.length}개`;
+
   if (files.length === 0) {
     container.innerHTML = `<div class="state-box"><h3>해당 카테고리에 신문이 없습니다.</h3></div>`;
     return;
   }
-  
+
   const grid = document.createElement('div');
   grid.className = 'pdf-grid';
+
   files.forEach((file, idx) => {
     const card = document.createElement('article');
     card.className = 'pdf-card';
     card.innerHTML = `
-      <div class="card-thumb"><canvas id="thumb-${file.sortKey}"></canvas></div>
+      <div class="card-thumb">
+        <div class="card-thumb__msg" id="thumb-msg-${file.sortKey}">
+          <div class="mini-spin"></div>
+          <span>미리보기 로딩중...</span>
+        </div>
+        <canvas id="thumb-${file.sortKey}"></canvas>
+      </div>
       <div class="card-top">
         <div class="card-issue">제 ${String(files.length - idx).padStart(3, '0')}호</div>
         <div class="card-date">${file.month}월 ${file.day}일</div>
         <div class="card-year">${file.year}년</div>
-      </div>
-    `;
+      </div>`;
     card.onclick = () => showView('viewer', file.path);
     grid.appendChild(card);
   });
+
   container.innerHTML = '';
   container.appendChild(grid);
 
-  // 썸네일 그리기 로직 (오류 해결: 절대 경로 강제 지정)
-  setTimeout(async () => {
-    for (const file of files) {
-      try {
-        const canvas = document.getElementById(`thumb-${file.sortKey}`);
-        if (!canvas) continue;
-        
-        const absolutePdfUrl = `https://${CONFIG.owner}.github.io/${CONFIG.repo}/${file.path}`;
-        const loadingTask = pdfjsLib.getDocument({ url: absolutePdfUrl, cMapUrl: CMAP_URL, cMapPacked: true });
-        const pdf = await loadingTask.promise;
-        const page = await pdf.getPage(1);
-        
-        const viewport = page.getViewport({ scale: 0.6 });
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-        await page.render({ canvasContext: canvas.getContext('2d'), viewport: viewport }).promise;
-      } catch(e) { console.error('미리보기 생성 실패:', e); }
-    }
-  }, 100);
+  /* 썸네일 렌더링: 순차 처리로 브라우저 부하 방지 */
+  renderThumbnails(files);
 }
 
-function updateStats(files, fromCache) {
+async function renderThumbnails(files) {
+  for (const file of files) {
+    const canvas = document.getElementById(`thumb-${file.sortKey}`);
+    const msgEl  = document.getElementById(`thumb-msg-${file.sortKey}`);
+    if (!canvas) continue;
+
+    try {
+      const url = pdfUrl(file.path);
+      const pdf  = await pdfjsLib.getDocument({ url, cMapUrl: CMAP_URL, cMapPacked: true }).promise;
+      const page = await pdf.getPage(1);
+
+      /* 카드 썸네일에 맞는 스케일 계산 */
+      const thumbW  = canvas.parentElement.clientWidth || 220;
+      const baseVP  = page.getViewport({ scale: 1 });
+      const scale   = thumbW / baseVP.width;
+      const viewport = page.getViewport({ scale });
+
+      canvas.width  = viewport.width;
+      canvas.height = viewport.height;
+
+      await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+
+      /* 성공: 로딩 메시지 숨기고 캔버스 표시 */
+      if (msgEl) msgEl.style.display = 'none';
+      canvas.style.display = 'block';
+
+    } catch(e) {
+      /* 실패: 로딩 메시지를 에러 아이콘으로 교체 */
+      if (msgEl) {
+        msgEl.innerHTML = `<span style="font-size:28px;">📄</span><span>미리보기 없음</span>`;
+        msgEl.querySelector('.mini-spin') && (msgEl.querySelector('.mini-spin').style.display = 'none');
+      }
+      console.warn(`썸네일 실패 (${file.name}):`, e.message);
+    }
+  }
+}
+
+function updateStats(files) {
   const years = [...new Set(files.map(f => f.year))];
-  document.getElementById('stat-total').textContent = files.length;
-  document.getElementById('stat-years').textContent = years.length;
+  document.getElementById('stat-total').textContent  = files.length;
+  document.getElementById('stat-years').textContent  = years.length;
   document.getElementById('stat-latest').textContent = files[0] ? `${files[0].month}/${files[0].day}` : '—';
 }
 
+/* ────────────────────────────────────────────────────────────
+   VIEWER
+──────────────────────────────────────────────────────────── */
 function initViewer(filePath) {
   if (!filePath) { showView('list'); return; }
-  const filename = filePath.split('/').pop();
-  const info = parseFileName(filename);
-  
-  // 뷰어 로직 (오류 해결: 절대 경로 강제 지정)
-  const absolutePdfUrl = `https://${CONFIG.owner}.github.io/${CONFIG.repo}/${filePath}`;
 
-  document.getElementById('viewer-title').innerHTML = info ? `<em>${info.month}월 ${info.day}일</em> &nbsp;— ${info.year}년 신문` : filename;
+  const filename       = filePath.split('/').pop();
+  const info           = parseFileName(filename);
+  const absolutePdfUrl = pdfUrl(filePath);
+
+  document.getElementById('viewer-title').innerHTML =
+    info ? `<em>${info.month}월 ${info.day}일</em> &nbsp;— ${info.year}년 신문` : filename;
   document.getElementById('viewer-filename').textContent = filename;
-  document.getElementById('viewer-info').innerHTML = info ? `<tr><td>발행일</td><td>${info.label}</td></tr><tr><td>파일명</td><td>${filename}</td></tr>` : `<tr><td>파일</td><td>${filename}</td></tr>`;
+  document.getElementById('breadcrumb-file').textContent = filename;
+  document.getElementById('viewer-info').innerHTML = info
+    ? `<tr><td>발행일</td><td>${info.label}</td></tr><tr><td>파일명</td><td>${filename}</td></tr>`
+    : `<tr><td>파일</td><td>${filename}</td></tr>`;
 
-  document.getElementById('btn-newtab').href = absolutePdfUrl;
-  document.getElementById('btn-download').href = absolutePdfUrl;
+  document.getElementById('btn-newtab').href    = absolutePdfUrl;
+  document.getElementById('btn-download').href  = absolutePdfUrl;
+  document.getElementById('btn-download').setAttribute('download', filename);
 
   setupIssueNav(filePath);
   loadGiscus(filePath);
 
-  const container = document.getElementById('pdf-embed');
-  container.innerHTML = '<div style="padding: 40px;"><div class="spin-ring"></div><p style="color:var(--text-mute);">최고 화질로 신문을 렌더링하고 있습니다...</p></div>';
+  const container  = document.getElementById('pdf-embed');
+  const pageInfoEl = document.getElementById('pdf-page-info');
+  container.innerHTML = `<div style="padding:40px;text-align:center;">
+    <div class="spin-ring"></div>
+    <p style="color:var(--text-mute);font-family:var(--f-mono);font-size:12px;">최고 화질로 렌더링 중…</p>
+  </div>`;
+  if (pageInfoEl) pageInfoEl.textContent = '';
 
-  pdfjsLib.getDocument({ url: absolutePdfUrl, cMapUrl: CMAP_URL, cMapPacked: true }).promise.then(pdf => {
-    container.innerHTML = '';
-    for (let num = 1; num <= pdf.numPages; num++) {
-      pdf.getPage(num).then(page => {
-        const canvas = document.createElement('canvas');
-        container.appendChild(canvas);
-        const context = canvas.getContext('2d');
-        const viewport = page.getViewport({ scale: 1.5 });
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
-        page.render({ canvasContext: context, viewport: viewport });
-      });
-    }
-  }).catch(err => {
-    container.innerHTML = `<div style="padding: 40px;"><h3 style="color:red; margin-bottom:10px;">PDF 로드 실패</h3><p style="color:var(--text-mute); margin-bottom:20px;">우측 상단의 '새 탭' 버튼을 눌러 직접 확인해주세요.</p><a href="${absolutePdfUrl}" target="_blank" class="btn">새 탭에서 바로 열기</a></div>`;
-  });
+  pdfjsLib.getDocument({ url: absolutePdfUrl, cMapUrl: CMAP_URL, cMapPacked: true }).promise
+    .then(pdf => {
+      container.innerHTML = '';
+      if (pageInfoEl) pageInfoEl.textContent = `총 ${pdf.numPages}페이지`;
+
+      /* 페이지 순서대로 렌더링 */
+      const renderPage = num => {
+        pdf.getPage(num).then(page => {
+          /* 뷰어 너비에 맞게 스케일 조정 */
+          const maxW     = container.clientWidth * 0.9;
+          const baseVP   = page.getViewport({ scale: 1 });
+          const scale    = Math.min(1.8, maxW / baseVP.width);
+          const viewport = page.getViewport({ scale });
+
+          const canvas       = document.createElement('canvas');
+          canvas.width       = viewport.width;
+          canvas.height      = viewport.height;
+          container.appendChild(canvas);
+          page.render({ canvasContext: canvas.getContext('2d'), viewport });
+
+          if (num < pdf.numPages) renderPage(num + 1);
+        });
+      };
+      renderPage(1);
+    })
+    .catch(err => {
+      console.error('[viewer]', err);
+      container.innerHTML = `<div style="padding:40px;text-align:center;">
+        <h3 style="color:#c0392b;margin-bottom:10px;">PDF 로드 실패</h3>
+        <p style="color:var(--text-mute);margin-bottom:20px;">
+          GitHub Pages 배포가 완료됐는지 확인하거나, 새 탭으로 직접 열어주세요.
+        </p>
+        <a href="${absolutePdfUrl}" target="_blank" class="btn">↗ 새 탭에서 바로 열기</a>
+      </div>`;
+    });
 }
 
 function setupIssueNav(currentPath) {
-  const files = APP.files;
-  const idx = files.findIndex(f => f.path === currentPath);
-  if(idx === -1) return;
+  const files   = APP.files;
+  const idx     = files.findIndex(f => f.path === currentPath);
+  if (idx === -1) return;
   const prevBtn = document.getElementById('btn-prev');
   const nextBtn = document.getElementById('btn-next');
   prevBtn.disabled = idx >= files.length - 1;
   nextBtn.disabled = idx <= 0;
-  prevBtn.onclick = () => { if (idx < files.length-1) showView('viewer', files[idx+1].path); };
-  nextBtn.onclick = () => { if (idx > 0) showView('viewer', files[idx-1].path); };
+  prevBtn.onclick  = () => { if (idx < files.length - 1) showView('viewer', files[idx + 1].path); };
+  nextBtn.onclick  = () => { if (idx > 0) showView('viewer', files[idx - 1].path); };
 }
 
+/* ────────────────────────────────────────────────────────────
+   GISCUS
+──────────────────────────────────────────────────────────── */
 function loadGiscus(term) {
   const container = document.getElementById('giscus-container');
   container.innerHTML = '';
-  if (GISCUS.repoId === 'YOUR_REPO_ID') { container.innerHTML = `<p style="text-align:center; padding:20px; color:var(--text-mute);">Giscus 설정이 완료되면 여기에 회의 보드가 나타납니다.</p>`; return; }
-  
+  const old = document.querySelector('iframe.giscus-frame');
+  if (old) old.remove();
+
+  if (GISCUS.repoId === 'YOUR_REPO_ID') {
+    container.innerHTML = `<p style="text-align:center;padding:20px;color:var(--text-mute);font-family:var(--f-mono);font-size:12px;line-height:2;">
+      Giscus 설정이 완료되면 여기에 회의 보드가 나타납니다.<br/>
+      <a href="https://giscus.app/ko" target="_blank" style="color:var(--gold);">giscus.app</a>에서 repoId와 categoryId를 발급받아 GISCUS 객체에 입력해 주세요.
+    </p>`;
+    return;
+  }
+
   const s = document.createElement('script');
   s.src = 'https://giscus.app/client.js';
   Object.entries({
-    'data-repo': GISCUS.repo, 'data-repo-id': GISCUS.repoId, 'data-category': GISCUS.category,
-    'data-category-id': GISCUS.categoryId, 'data-mapping': 'specific', 'data-term': term,
-    'data-strict': '1', 'data-reactions-enabled': '1', 'data-theme': GISCUS.theme, 'data-lang': GISCUS.lang, 'crossorigin': 'anonymous'
+    'data-repo':              GISCUS.repo,
+    'data-repo-id':           GISCUS.repoId,
+    'data-category':          GISCUS.category,
+    'data-category-id':       GISCUS.categoryId,
+    'data-mapping':           'specific',
+    'data-term':              term,
+    'data-strict':            '1',
+    'data-reactions-enabled': '1',
+    'data-theme':             GISCUS.theme,
+    'data-lang':              GISCUS.lang,
+    'crossorigin':            'anonymous',
   }).forEach(([k, v]) => s.setAttribute(k, v));
   s.async = true;
   container.appendChild(s);
 }
 
+/* ────────────────────────────────────────────────────────────
+   INIT
+──────────────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
   const dateStr = new Date().toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric' });
   document.getElementById('current-date').textContent = dateStr;
-  
+
   const { view, file } = parseHash();
   if (view === 'viewer' && file) initList().then(() => _applyView('viewer', file));
   else initList();
