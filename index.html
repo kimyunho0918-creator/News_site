@@ -442,9 +442,9 @@ const CMAP_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/'
 const contUrl = path =>
   `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${path}`;
 
-/* PDF 절대 경로 — raw.githubusercontent.com 사용 (CORS 없음, Pages 불필요) */
+/* PDF URL — media.githubusercontent.com 사용 (LFS 파일도 실제 바이너리 반환) */
 const pdfUrl = filePath =>
-  `https://raw.githubusercontent.com/${CONFIG.owner}/${CONFIG.repo}/${CONFIG.branch}/${filePath}`;
+  `https://media.githubusercontent.com/media/${CONFIG.owner}/${CONFIG.repo}/${CONFIG.branch}/${filePath}`;
 
 class RateLimitError extends Error { constructor(m){ super(m); this.name='RateLimitError'; } }
 class ApiError extends Error { constructor(m,s){ super(m); this.name='ApiError'; this.status=s; } }
@@ -585,7 +585,8 @@ async function initList() {
           if (!info) {
             dbg('warn', `파일명 형식 불일치: ${f.name}`, 'YY_MM_DD.pdf 형식이 아닌 파일은 무시됩니다.');
           }
-          return info ? { name: f.name, path: f.path, ...info } : null;
+          // download_url 도 함께 저장 (LFS 파일 대응)
+          return info ? { name: f.name, path: f.path, downloadUrl: f.download_url || null, ...info } : null;
         })
         .filter(Boolean)
         .sort((a, b) => b.sortKey.localeCompare(a.sortKey));
@@ -742,9 +743,14 @@ function updateStats(files) {
 function initViewer(filePath) {
   if (!filePath) { showView('list'); return; }
 
-  const filename       = filePath.split('/').pop();
-  const info           = parseFileName(filename);
-  const absolutePdfUrl = pdfUrl(filePath);
+  const filename = filePath.split('/').pop();
+  const info     = parseFileName(filename);
+
+  // URL 우선순위: API download_url > media.githubusercontent.com > raw.githubusercontent.com
+  const fileObj       = APP.files.find(f => f.path === filePath);
+  const mediaUrl      = `https://media.githubusercontent.com/media/${CONFIG.owner}/${CONFIG.repo}/${CONFIG.branch}/${filePath}`;
+  const rawUrl        = `https://raw.githubusercontent.com/${CONFIG.owner}/${CONFIG.repo}/${CONFIG.branch}/${filePath}`;
+  const absolutePdfUrl = fileObj?.downloadUrl || mediaUrl;
 
   document.getElementById('viewer-title').innerHTML =
     info ? `<em>${info.month}월 ${info.day}일</em> &nbsp;— ${info.year}년 신문` : filename;
@@ -771,72 +777,82 @@ function initViewer(filePath) {
 
   dbg('info', 'PDF URL 접근 테스트 중…', absolutePdfUrl);
 
-  // ── 1단계: URL 접근 가능 여부 먼저 확인 ──
-  fetch(absolutePdfUrl, { method: 'HEAD' })
-    .then(res => {
-      if (!res.ok) {
-        // HTTP 오류 → 원인 명확히 표시
-        const reasons = {
-          404: '파일이 없습니다. 레포에 PDF가 커밋됐는지 확인하세요.',
-          403: '접근 거부(403). 레포지토리가 Private으로 설정돼 있을 수 있습니다.',
-          401: '인증 필요(401). 레포지토리가 Private입니다.',
-        };
-        const reason = reasons[res.status] || `HTTP ${res.status} 오류`;
-        dbg('err', `PDF URL 접근 실패: ${res.status}`, reason);
-        container.innerHTML = `<div style="padding:40px;text-align:center;">
-          <h3 style="color:#c0392b;margin-bottom:8px;">PDF 접근 불가 (${res.status})</h3>
-          <p style="color:var(--text-mute);margin-bottom:20px;">${reason}</p>
-          <a href="https://github.com/${CONFIG.owner}/${CONFIG.repo}/settings" target="_blank" class="btn">⚙️ 레포 설정 열기</a>
-        </div>`;
-        return;
-      }
+  // PDF를 직접 fetch → ArrayBuffer로 pdf.js에 전달 (CORS/LFS 우회)
+  async function tryLoadPdf(url, label) {
+    dbg('info', `${label} 시도 중…`, url);
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const buffer = await res.arrayBuffer();
 
-      dbg('ok', `URL 접근 OK (${res.status}) — 이제 PDF 렌더링 시작`);
+    // LFS 포인터 감지 (실제 PDF가 아닌 경우)
+    const header = new TextDecoder().decode(buffer.slice(0, 50));
+    if (header.includes('version https://git-lfs')) {
+      throw new Error('LFS_POINTER');
+    }
+    if (!header.startsWith('%PDF')) {
+      throw new Error(`Invalid PDF structure`);
+    }
+    return buffer;
+  }
 
-      // ── 2단계: 파일을 직접 fetch → ArrayBuffer로 pdf.js에 전달 ──
-      // URL을 worker에서 재요청하지 않고 직접 데이터를 넘겨서 CORS 우회
-      return fetch(absolutePdfUrl)
-        .then(r => r.arrayBuffer())
-        .then(buffer => {
-          dbg('ok', `PDF 다운로드 완료 (${(buffer.byteLength/1024).toFixed(0)} KB)`);
-          return pdfjsLib.getDocument({ data: buffer, cMapUrl: CMAP_URL, cMapPacked: true }).promise;
-        })
-        .then(pdf => {
-          dbg('ok', `PDF 렌더링 성공 — 총 ${pdf.numPages}페이지`);
-          container.innerHTML = '';
-          if (pageInfoEl) pageInfoEl.textContent = `총 ${pdf.numPages}페이지`;
+  // URL 순서대로 시도
+  const urlsToTry = [
+    { url: absolutePdfUrl,  label: '기본 URL' },
+    { url: mediaUrl,        label: 'media URL' },
+    { url: rawUrl,          label: 'raw URL' },
+  ].filter((v, i, arr) => arr.findIndex(x => x.url === v.url) === i); // 중복 제거
 
-          const renderPage = num => {
-            pdf.getPage(num).then(page => {
-              const maxW     = container.clientWidth * 0.9 || 600;
-              const baseVP   = page.getViewport({ scale: 1 });
-              const scale    = Math.min(1.8, maxW / baseVP.width);
-              const viewport = page.getViewport({ scale });
-              const canvas       = document.createElement('canvas');
-              canvas.width       = viewport.width;
-              canvas.height      = viewport.height;
-              container.appendChild(canvas);
-              page.render({ canvasContext: canvas.getContext('2d'), viewport });
-              if (num < pdf.numPages) renderPage(num + 1);
-            });
-          };
-          renderPage(1);
-        });
-    })
-    .catch(err => {
-      // fetch 자체가 실패 = 네트워크 오류 or CORS
-      dbg('err', `네트워크 오류: ${err.message}`,
-        'fetch() 자체가 실패했습니다. 네트워크 연결 또는 CORS 문제일 수 있습니다.'
-      );
+  async function loadWithFallback(index = 0) {
+    if (index >= urlsToTry.length) {
+      dbg('err', '모든 URL 시도 실패', '파일이 손상됐거나 비공개 레포일 수 있습니다.');
       container.innerHTML = `<div style="padding:40px;text-align:center;">
-        <h3 style="color:#c0392b;margin-bottom:8px;">네트워크 오류</h3>
-        <p style="color:var(--text-mute);margin-bottom:8px;">${err.message}</p>
-        <p style="color:var(--text-mute);margin-bottom:20px;font-size:12px;">
-          아래 링크를 눌러 PDF가 직접 열리는지 확인해주세요.
+        <h3 style="color:#c0392b;margin-bottom:8px;">PDF 로드 실패</h3>
+        <p style="color:var(--text-mute);margin-bottom:8px;">모든 URL에서 실패했습니다.</p>
+        <p style="color:var(--text-mute);font-size:12px;margin-bottom:20px;">
+          레포지토리가 Public인지, PDF 파일이 정상인지 확인해주세요.
         </p>
-        <a href="${absolutePdfUrl}" target="_blank" class="btn">↗ PDF 직접 열기</a>
+        <a href="${mediaUrl}" target="_blank" class="btn">↗ PDF 직접 열기</a>
       </div>`;
-    });
+      return;
+    }
+
+    const { url, label } = urlsToTry[index];
+    try {
+      const buffer = await tryLoadPdf(url, label);
+      dbg('ok', `${label} 성공! PDF 다운로드 완료 (${(buffer.byteLength/1024).toFixed(0)} KB)`);
+
+      const pdf = await pdfjsLib.getDocument({ data: buffer, cMapUrl: CMAP_URL, cMapPacked: true }).promise;
+      dbg('ok', `PDF 렌더링 성공 — 총 ${pdf.numPages}페이지`);
+
+      container.innerHTML = '';
+      if (pageInfoEl) pageInfoEl.textContent = `총 ${pdf.numPages}페이지`;
+
+      const renderPage = num => {
+        pdf.getPage(num).then(page => {
+          const maxW     = container.clientWidth * 0.9 || 600;
+          const baseVP   = page.getViewport({ scale: 1 });
+          const scale    = Math.min(1.8, maxW / baseVP.width);
+          const viewport = page.getViewport({ scale });
+          const canvas   = document.createElement('canvas');
+          canvas.width   = viewport.width;
+          canvas.height  = viewport.height;
+          container.appendChild(canvas);
+          page.render({ canvasContext: canvas.getContext('2d'), viewport });
+          if (num < pdf.numPages) renderPage(num + 1);
+        });
+      };
+      renderPage(1);
+
+    } catch(err) {
+      const reason = err.message === 'LFS_POINTER'
+        ? 'LFS 포인터 파일 감지 → 다음 URL 시도'
+        : err.message;
+      dbg('warn', `${label} 실패: ${reason}`, `다음 URL로 재시도합니다.`);
+      loadWithFallback(index + 1);
+    }
+  }
+
+  loadWithFallback();
 }
 
 function setupIssueNav(currentPath) {
